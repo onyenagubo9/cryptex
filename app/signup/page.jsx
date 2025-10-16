@@ -13,10 +13,12 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [fadeIn, setFadeIn] = useState(false);
+  const [showPage, setShowPage] = useState(false); // 👈 Controls when to show the page
 
   useEffect(() => {
-    setTimeout(() => setFadeIn(true), 100); // Animate on mount
+    // Simulate loading (e.g. fetching auth status, etc.)
+    const timer = setTimeout(() => setShowPage(true), 1500); // Show page after 1.5s
+    return () => clearTimeout(timer);
   }, []);
 
   const handleSignup = async (e) => {
@@ -29,17 +31,28 @@ export default function SignupPage() {
     else setError(res.msg);
   };
 
+  // 🌀 Initial Loading Screen
+  if (!showPage) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-black text-yellow-400 text-xl font-semibold">
+        <div className="animate-pulse flex flex-col items-center gap-2">
+          <Image src="/logo-crp.png" alt="Loading Logo" width={60} height={60} />
+          <span>Loading Cryptex...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ Actual Signup Page
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-black via-gray-900 to-gray-800 px-6">
       <div
-        className={`bg-gray-900/80 p-10 rounded-3xl shadow-xl w-full max-w-md text-white transform transition-all duration-700 ${
-          fadeIn ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-        }`}
+        className={`bg-gray-900/80 p-10 rounded-3xl shadow-xl w-full max-w-md text-white transform transition-all duration-700 opacity-100 translate-y-0`}
       >
         {/* Logo */}
         <div className="flex justify-center mb-6">
           <Image
-            src="/logo-crp.png" // Add your logo in public folder
+            src="/logo-crp.png"
             alt="Cryptex Logo"
             width={80}
             height={80}
