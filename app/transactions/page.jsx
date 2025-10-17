@@ -19,7 +19,7 @@ export default function Transactions() {
     <div className="flex min-h-screen bg-gray-900 text-white relative">
       {!isMobile && <Sidebar activeTab="transactions" />} {/* Sticky Sidebar */}
       <main className="flex-1 flex flex-col">
-        <SubHeader title="Transactions History"  />
+        <SubHeader title=" ⏳ History"  />
         <div className="p-6 overflow-y-auto flex-1">
           <TransactionsPage />
         </div>

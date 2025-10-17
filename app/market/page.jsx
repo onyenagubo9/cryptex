@@ -19,7 +19,7 @@ export default function MarketPage() {
     <div className="flex min-h-screen bg-gray-900 text-white relative">
       {!isMobile && <Sidebar activeTab="market" />} {/* Sticky Sidebar */}
       <main className="flex-1 flex flex-col">
-        <SubHeader title="Live Market"  />
+        <SubHeader title=" 📈 Market"  />
         <div className="p-6 overflow-y-auto flex-1">
           <CryptoPrices />
         </div>

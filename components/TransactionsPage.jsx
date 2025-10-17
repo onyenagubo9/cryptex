@@ -36,7 +36,7 @@ export default function TransactionsPage() {
 
   const typeColors = {
     deposit: "text-green-500",
-    withdrawal: "text-red-500",
+    debit: "text-red-500",
     fuel: "text-blue-500",
     profit: "text-yellow-500",
   };
@@ -52,7 +52,7 @@ export default function TransactionsPage() {
   return (
     <div className="min-h-screen bg-transparent text-white px-6 py-4">
       <h1 className="text-2xl font-bold mb-6 text-center text-yellow-400">
-        Transaction History
+        
       </h1>
 
       {transactions.length === 0 ? (

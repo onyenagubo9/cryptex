@@ -21,5 +21,9 @@ export const db = getFirestore(app);
 export const firestore = getFirestore(app);
 export default app;
 
+
+// admin 
+
+
 // Make login persist after page reload
 setPersistence(auth, browserLocalPersistence);
