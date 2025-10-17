@@ -1,27 +1,32 @@
+// File: /app/api/send-login-email/route.js (Next.js 13+ /app router)
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 
 export async function POST(req) {
   try {
     const { to, name } = await req.json();
+    if (!to) {
+      return NextResponse.json({ ok: false, error: "Recipient email is required" }, { status: 400 });
+    }
+
     const safeName = name || "Investor";
 
-    // Hardcoded Zoho credentials (not recommended for public repos)
+    // Hardcoded Zoho SMTP credentials (use App Password)
     const ZOHO_EMAIL = "info@cryptexwallet.app";
-    const ZOHO_PASSWORD = "Anthony123@@@";
+    const ZOHO_PASSWORD = "Anthony123@@@"; // Replace with Zoho app-specific password
 
-    // Create SMTP transporter for Zoho
+    // Nodemailer transporter
     const transporter = nodemailer.createTransport({
       host: "smtp.zoho.com",
-      port: 465,
-      secure: true,
+      port: 587,      // STARTTLS port
+      secure: false,  // STARTTLS
       auth: {
         user: ZOHO_EMAIL,
         pass: ZOHO_PASSWORD,
       },
     });
 
-    // Email HTML
+    // Email HTML content
     const html = `
       <html>
         <body style="font-family:Arial;background-color:#f4f7fb;margin:0;padding:0;">
@@ -50,13 +55,15 @@ export async function POST(req) {
       </html>
     `;
 
-    // Send the email
+    // Send email
     const info = await transporter.sendMail({
       from: `"Crptex" <${ZOHO_EMAIL}>`,
       to,
       subject: "Login Notification — Crptex Security Alert",
       html,
     });
+
+    console.log("Email sent:", info.messageId);
 
     return NextResponse.json({ ok: true, message: "Login email sent!", info });
   } catch (err) {
