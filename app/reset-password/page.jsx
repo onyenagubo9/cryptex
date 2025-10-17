@@ -17,7 +17,7 @@ export default function ResetPassword() {
       const res = await fetch("/api/send-reset-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ to: email, name: "User" }), // Send 'to' for the API
       });
 
       const data = await res.json();
@@ -38,9 +38,15 @@ export default function ResetPassword() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-black via-gray-900 to-gray-800 px-6">
-      <form className="bg-gray-900/80 p-10 rounded-3xl shadow-xl w-full max-w-md text-white" onSubmit={handleReset}>
-        <h2 className="text-3xl font-bold text-yellow-400 mb-6 text-center animate-fadeIn">Reset Password</h2>
+      <form
+        className="bg-gray-900/80 p-10 rounded-3xl shadow-xl w-full max-w-md text-white"
+        onSubmit={handleReset}
+      >
+        <h2 className="text-3xl font-bold text-yellow-400 mb-6 text-center animate-fadeIn">
+          Reset Password
+        </h2>
 
+        {/* Email Input */}
         <div className="relative mb-4 animate-slideIn">
           <Mail className="absolute left-3 top-3 text-gray-400" />
           <input
@@ -53,6 +59,7 @@ export default function ResetPassword() {
           />
         </div>
 
+        {/* Submit Button */}
         <button
           type="submit"
           disabled={loading}
@@ -60,22 +67,48 @@ export default function ResetPassword() {
             loading ? "opacity-50 cursor-not-allowed" : ""
           }`}
         >
-          {loading && <span className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></span>}
+          {loading && (
+            <span className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
+          )}
           {loading ? "Sending..." : "Send Reset Link"}
         </button>
 
+        {/* Message */}
         {message && <p className="mt-4 text-center text-sm">{message}</p>}
 
+        {/* Back to Login */}
         <p className="mt-6 text-center text-sm text-gray-300 animate-fadeIn delay-100">
-          <a href="/login" className="text-yellow-400 hover:underline font-semibold">Back to Login</a>
+          <a href="/login" className="text-yellow-400 hover:underline font-semibold">
+            Back to Login
+          </a>
         </p>
 
+        {/* Animations */}
         <style jsx>{`
-          .animate-fadeIn { opacity: 0; animation: fadeIn 1s forwards; }
-          .animate-slideIn { opacity: 0; transform: translateY(20px); animation: slideIn 0.7s forwards; }
-          .delay-100 { animation-delay: 0.2s; }
-          @keyframes fadeIn { to { opacity: 1; } }
-          @keyframes slideIn { to { opacity: 1; transform: translateY(0); } }
+          .animate-fadeIn {
+            opacity: 0;
+            animation: fadeIn 1s forwards;
+          }
+          .animate-slideIn {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideIn 0.7s forwards;
+          }
+          .delay-100 {
+            animation-delay: 0.2s;
+          }
+
+          @keyframes fadeIn {
+            to {
+              opacity: 1;
+            }
+          }
+          @keyframes slideIn {
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
         `}</style>
       </form>
     </div>
