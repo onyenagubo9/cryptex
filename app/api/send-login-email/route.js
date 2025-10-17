@@ -1,19 +1,27 @@
 import { NextResponse } from "next/server";
-import Mailjet from "node-mailjet";
-
-const mailjet = Mailjet.apiConnect(
-  "9938ae41ece30248ac7614d92c690e6e",
-  "791802c2617efd3764c9ff94c11e8714"
-);
-
-const FROM_EMAIL = "info.crptex.usa@gmail.com";
-const FROM_NAME = "Crptex";
+import nodemailer from "nodemailer";
 
 export async function POST(req) {
   try {
     const { to, name } = await req.json();
     const safeName = name || "Investor";
 
+    // Hardcoded Zoho credentials (not recommended for public repos)
+    const ZOHO_EMAIL = "info@cryptexwallet.app";
+    const ZOHO_PASSWORD = "Anthony123@@@";
+
+    // Create SMTP transporter for Zoho
+    const transporter = nodemailer.createTransport({
+      host: "smtp.zoho.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: ZOHO_EMAIL,
+        pass: ZOHO_PASSWORD,
+      },
+    });
+
+    // Email HTML
     const html = `
       <html>
         <body style="font-family:Arial;background-color:#f4f7fb;margin:0;padding:0;">
@@ -42,20 +50,17 @@ export async function POST(req) {
       </html>
     `;
 
-    const request = await mailjet.post("send", { version: "v3.1" }).request({
-      Messages: [
-        {
-          From: { Email: FROM_EMAIL, Name: FROM_NAME },
-          To: [{ Email: to, Name: safeName }],
-          Subject: "Login Notification — Crptex Security Alert",
-          HTMLPart: html,
-        },
-      ],
+    // Send the email
+    const info = await transporter.sendMail({
+      from: `"Crptex" <${ZOHO_EMAIL}>`,
+      to,
+      subject: "Login Notification — Crptex Security Alert",
+      html,
     });
 
-    return NextResponse.json({ ok: true, message: "Login email sent!", data: request.body });
+    return NextResponse.json({ ok: true, message: "Login email sent!", info });
   } catch (err) {
-    console.error("❌ Mailjet Error:", err.message);
+    console.error("❌ SMTP Error:", err.message);
     return NextResponse.json({ ok: false, error: err.message }, { status: 500 });
   }
 }
