@@ -1,116 +1,90 @@
 "use client";
-
 import { useState } from "react";
-import { Mail } from "lucide-react";
 
-export default function ResetPassword() {
+export default function ResetForm() {
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleReset = async (e) => {
-    e.preventDefault();
+  const handleReset = async () => {
+    if (!email) return setMessage("Please enter your email.");
     setLoading(true);
-    setMessage("");
-
     try {
       const res = await fetch("/api/send-reset-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to: email, name: "User" }), // Send 'to' for the API
+        body: JSON.stringify({ email }),
       });
-
       const data = await res.json();
-
-      if (data.ok) {
-        setMessage("✅ Password reset link sent! Check your inbox or spam folder.");
-        setEmail("");
-      } else {
-        setMessage(`❌ ${data.error || "Something went wrong."}`);
-      }
+      setMessage(data.message || data.error);
     } catch (err) {
-      console.error(err);
-      setMessage("⚠️ Unable to send reset email. Try again later.");
+      setMessage("Something went wrong.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-black via-gray-900 to-gray-800 px-6">
-      <form
-        className="bg-gray-900/80 p-10 rounded-3xl shadow-xl w-full max-w-md text-white"
-        onSubmit={handleReset}
-      >
-        <h2 className="text-3xl font-bold text-yellow-400 mb-6 text-center animate-fadeIn">
-          Reset Password
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 via-gray-800 to-gray-700 p-6">
+      <div className="w-full max-w-md bg-gray-800 rounded-2xl shadow-xl p-8 sm:p-10 text-white">
+        <h2 className="text-2xl sm:text-3xl font-bold text-yellow-400 mb-6 text-center">
+          🔒 Reset Your Password
         </h2>
-
-        {/* Email Input */}
-        <div className="relative mb-4 animate-slideIn">
-          <Mail className="absolute left-3 top-3 text-gray-400" />
-          <input
-            type="email"
-            placeholder="Enter your email"
-            className="w-full pl-10 pr-3 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 transition text-white"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={loading}
-          className={`w-full bg-yellow-400 text-black font-bold py-3 rounded-full shadow-lg hover:bg-yellow-500 hover:scale-105 transition-transform duration-300 flex items-center justify-center gap-3 ${
-            loading ? "opacity-50 cursor-not-allowed" : ""
-          }`}
-        >
-          {loading && (
-            <span className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
-          )}
-          {loading ? "Sending..." : "Send Reset Link"}
-        </button>
-
-        {/* Message */}
-        {message && <p className="mt-4 text-center text-sm">{message}</p>}
-
-        {/* Back to Login */}
-        <p className="mt-6 text-center text-sm text-gray-300 animate-fadeIn delay-100">
-          <a href="/login" className="text-yellow-400 hover:underline font-semibold">
-            Back to Login
-          </a>
+        <p className="text-gray-300 text-center mb-6">
+          Enter your email address below and we'll send you a password reset link.
         </p>
 
-        {/* Animations */}
-        <style jsx>{`
-          .animate-fadeIn {
-            opacity: 0;
-            animation: fadeIn 1s forwards;
-          }
-          .animate-slideIn {
-            opacity: 0;
-            transform: translateY(20px);
-            animation: slideIn 0.7s forwards;
-          }
-          .delay-100 {
-            animation-delay: 0.2s;
-          }
+        <input
+          type="email"
+          placeholder="Your email address"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full p-3 rounded-lg text-gray-900 font-medium mb-4 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+        />
 
-          @keyframes fadeIn {
-            to {
-              opacity: 1;
-            }
-          }
-          @keyframes slideIn {
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-        `}</style>
-      </form>
+        <button
+          onClick={handleReset}
+          disabled={loading}
+          className={`w-full py-3 rounded-lg font-semibold text-black bg-yellow-400 hover:bg-yellow-500 transition flex items-center justify-center gap-2 ${
+            loading ? "opacity-70 cursor-not-allowed" : ""
+          }`}
+        >
+          {loading ? (
+            <svg
+              className="animate-spin h-5 w-5 text-black"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+              />
+            </svg>
+          ) : (
+            "Send Reset Link"
+          )}
+        </button>
+
+        {message && (
+          <p
+            className={`mt-4 text-center font-medium ${
+              message.includes("sent") ? "text-green-400" : "text-red-400"
+            }`}
+          >
+            {message}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
