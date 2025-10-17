@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     }
 
     await sendPasswordResetEmail(auth, email, {
-      url: "http://localhost:3000/login", // Redirect after reset
+      url: "https://www.cryptexwallet.app/login", // Redirect after reset
       handleCodeInApp: true,
     });
 
