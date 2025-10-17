@@ -1,74 +1,84 @@
-// File: /app/api/send-reset-email/route.js
-import { NextResponse } from "next/server";
+// app/api/send-reset-email/route.js
 import nodemailer from "nodemailer";
+import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
-    const { email } = await req.json();
+    const { to, name } = await req.json();
 
-    if (!email) return NextResponse.json({ ok: false, error: "Email is required" }, { status: 400 });
+    if (!to) {
+      return NextResponse.json({ ok: false, error: "Missing recipient email" }, { status: 400 });
+    }
 
+    const safeName = name || "Investor";
+
+    // Zoho SMTP credentials
     const ZOHO_EMAIL = "info@cryptexwallet.app";
-    const ZOHO_PASSWORD = "KDiFG31b1a5N"; // App-specific password
+    const ZOHO_APP_PASSWORD = "KDiFG31b1a5N"; // <- Use your app password here
 
+    // Create transporter
     const transporter = nodemailer.createTransport({
       host: "smtp.zoho.com",
-      port: 587,
-      secure: false, // STARTTLS
-      auth: { user: ZOHO_EMAIL, pass: ZOHO_PASSWORD },
+      port: 465,
+      secure: true,
+      auth: {
+        user: ZOHO_EMAIL,
+        pass: ZOHO_APP_PASSWORD,
+      },
     });
 
+    // Email HTML
     const html = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Password Reset</title>
-        <style>
-          body { margin:0; padding:0; font-family: Arial, sans-serif; background-color: #f4f7fb; }
-          .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-          .header { background: #0a1f44; color: #ffd700; text-align: center; padding: 25px; font-size: 24px; font-weight: bold; }
-          .body { padding: 30px; color: #0a1f44; line-height: 1.6; }
-          .body p { margin-bottom: 20px; }
-          .button-container { text-align: center; margin: 30px 0; }
-          .btn { background-color: #ffd700; color: #0a1f44; text-decoration: none; padding: 12px 25px; border-radius: 8px; font-weight: 600; display: inline-block; transition: all 0.3s ease; }
-          .btn:hover { background-color: #e0bc00; transform: scale(1.05); }
-          .footer { background: #0a1f44; color: #ccc; text-align: center; padding: 15px; font-size: 12px; }
-          @media (max-width: 600px) {
-            .container { margin: 20px; }
-            .header { font-size: 20px; }
-            .btn { padding: 10px 20px; font-size: 14px; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">Reset Your Password</div>
-          <div class="body">
-            <p>Hello,</p>
-            <p>We received a request to reset your Crptex account password. Click the button below to reset it securely:</p>
-            <div class="button-container">
-              <a href="https://crptex.app/reset-password?email=${email}" class="btn">Reset My Password</a>
+      <html>
+        <body style="font-family:Arial,sans-serif;background-color:#f4f7fb;margin:0;padding:0;">
+          <div style="max-width:600px;margin:40px auto;background-color:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08);overflow:hidden;">
+            <div style="background-color:#0a1f44;padding:25px;text-align:center;">
+              <h1 style="color:#ffd700;">Reset Your Password</h1>
             </div>
-            <p>If you didn't request this, you can safely ignore this email.</p>
+            <div style="padding:30px;">
+              <h2 style="color:#0a1f44;">Hi ${safeName},</h2>
+              <p>We received a request to reset your password for your <strong>Crptex</strong> account.</p>
+              <div style="text-align:center;margin:30px 0;">
+                <a href="https://cryptex.app/reset-password"
+                  style="background-color:#ffd700;color:#0a1f44;padding:12px 25px;border-radius:8px;text-decoration:none;font-weight:600;">
+                  Reset Password
+                </a>
+              </div>
+              <p style="color:#777;font-size:13px;">If you did not request a password reset, you can safely ignore this email.</p>
+            </div>
+            <div style="background-color:#0a1f44;padding:15px;text-align:center;">
+              <p style="color:#ccc;font-size:12px;margin:0;">© 2025 Crptex. All rights reserved.</p>
+            </div>
           </div>
-          <div class="footer">© 2025 Crptex. All rights reserved.</div>
-        </div>
-      </body>
+        </body>
       </html>
     `;
 
-    await transporter.sendMail({
+    // Plain-text version
+    const text = `
+Hi ${safeName},
+
+We received a request to reset your password for your Crptex account.
+
+Reset your password here: https://cryptex.app/reset-password
+
+If you did not request this, you can ignore this email.
+
+© 2025 Crptex. All rights reserved.
+`;
+
+    // Send the email
+    const info = await transporter.sendMail({
       from: `"Crptex" <${ZOHO_EMAIL}>`,
-      to: email,
-      subject: "Crptex Password Reset Request",
-      html,
+      to,
+      subject: "Reset Your Crptex Password",
+      text, // plain-text version
+      html, // HTML version
     });
 
-    return NextResponse.json({ ok: true, message: "Password reset email sent!" });
+    return NextResponse.json({ ok: true, message: "Reset email sent!", info });
   } catch (err) {
-    console.error("SMTP Error:", err.message);
+    console.error("❌ SMTP Error:", err.message);
     return NextResponse.json({ ok: false, error: err.message }, { status: 500 });
   }
 }
