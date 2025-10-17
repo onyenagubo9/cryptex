@@ -9,7 +9,7 @@ export async function POST(req) {
     if (!email) return NextResponse.json({ ok: false, error: "Email is required" }, { status: 400 });
 
     const ZOHO_EMAIL = "info@cryptexwallet.app";
-    const ZOHO_PASSWORD = "Anthony123@@@"; // App-specific password
+    const ZOHO_PASSWORD = "KDiFG31b1a5N"; // App-specific password
 
     const transporter = nodemailer.createTransport({
       host: "smtp.zoho.com",

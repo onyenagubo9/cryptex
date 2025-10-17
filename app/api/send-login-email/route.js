@@ -13,7 +13,7 @@ export async function POST(req) {
 
     // Hardcoded Zoho SMTP credentials (use App Password)
     const ZOHO_EMAIL = "info@cryptexwallet.app";
-    const ZOHO_PASSWORD = "Anthony123@@@"; // Replace with Zoho app-specific password
+    const ZOHO_PASSWORD = "KDiFG31b1a5N"; // Replace with Zoho app-specific password 
 
     // Nodemailer transporter
     const transporter = nodemailer.createTransport({
