@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "@/firebase/config";
 import { Mail } from "lucide-react";
 
 export default function ResetPassword() {
@@ -16,16 +14,23 @@ export default function ResetPassword() {
     setMessage("");
 
     try {
-      await sendPasswordResetEmail(auth, email);
-      setMessage("✅ Password reset link sent to your email! or spam");
-      setEmail("");
-    } catch (error) {
-      console.error("Error resetting password:", error);
-      if (error.code === "auth/user-not-found")
-        setMessage("❌ No account found with that email.");
-      else if (error.code === "auth/invalid-email")
-        setMessage("⚠️ Invalid email address.");
-      else setMessage("⚠️ Something went wrong. Try again.");
+      const res = await fetch("/api/send-reset-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (data.ok) {
+        setMessage("✅ Password reset link sent! Check your inbox or spam folder.");
+        setEmail("");
+      } else {
+        setMessage(`❌ ${data.error || "Something went wrong."}`);
+      }
+    } catch (err) {
+      console.error(err);
+      setMessage("⚠️ Unable to send reset email. Try again later.");
     } finally {
       setLoading(false);
     }
@@ -36,7 +41,6 @@ export default function ResetPassword() {
       <form className="bg-gray-900/80 p-10 rounded-3xl shadow-xl w-full max-w-md text-white" onSubmit={handleReset}>
         <h2 className="text-3xl font-bold text-yellow-400 mb-6 text-center animate-fadeIn">Reset Password</h2>
 
-        {/* Email Input */}
         <div className="relative mb-4 animate-slideIn">
           <Mail className="absolute left-3 top-3 text-gray-400" />
           <input
@@ -49,7 +53,6 @@ export default function ResetPassword() {
           />
         </div>
 
-        {/* Submit Button */}
         <button
           type="submit"
           disabled={loading}
@@ -57,41 +60,24 @@ export default function ResetPassword() {
             loading ? "opacity-50 cursor-not-allowed" : ""
           }`}
         >
-          {loading && (
-            <span className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
-          )}
+          {loading && <span className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></span>}
           {loading ? "Sending..." : "Send Reset Link"}
         </button>
 
-        {/* Message */}
         {message && <p className="mt-4 text-center text-sm">{message}</p>}
 
-        {/* Back to Login */}
         <p className="mt-6 text-center text-sm text-gray-300 animate-fadeIn delay-100">
           <a href="/login" className="text-yellow-400 hover:underline font-semibold">Back to Login</a>
         </p>
+
+        <style jsx>{`
+          .animate-fadeIn { opacity: 0; animation: fadeIn 1s forwards; }
+          .animate-slideIn { opacity: 0; transform: translateY(20px); animation: slideIn 0.7s forwards; }
+          .delay-100 { animation-delay: 0.2s; }
+          @keyframes fadeIn { to { opacity: 1; } }
+          @keyframes slideIn { to { opacity: 1; transform: translateY(0); } }
+        `}</style>
       </form>
-
-      {/* Animations */}
-      <style jsx>{`
-        .animate-fadeIn {
-          opacity: 0;
-          animation: fadeIn 1s forwards;
-        }
-        .animate-slideIn {
-          opacity: 0;
-          transform: translateY(20px);
-          animation: slideIn 0.7s forwards;
-        }
-        .delay-100 { animation-delay: 0.2s; }
-
-        @keyframes fadeIn {
-          to { opacity: 1; }
-        }
-        @keyframes slideIn {
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </div>
   );
 }
