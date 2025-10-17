@@ -14,7 +14,7 @@ export async function POST(req) {
 
     // Zoho credentials
     const ZOHO_EMAIL = "info@cryptexwallet.app";
-    const ZOHO_PASSWORD = "YourZohoAppPassword"; // Replace with Zoho app-specific password
+    const ZOHO_PASSWORD = "Anthony123@@@"; // Replace with Zoho app-specific password
 
     // Create transporter
     const transporter = nodemailer.createTransport({
