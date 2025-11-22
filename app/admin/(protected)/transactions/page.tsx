@@ -154,14 +154,25 @@ export default function AllTransactionsPage() {
                     {date.toLocaleString()}
                   </td>
 
-                  {/* ADD TRANSACTION BUTTON */}
-                  <td className="p-3">
+                  {/* ACTION BUTTONS */}
+                  <td className="p-3 space-x-2 flex">
+
+                    {/* EDIT BUTTON */}
+                    <Link
+                      href={`/admin/transactions/${tx.id}/edit`}
+                      className="px-3 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition"
+                    >
+                      Edit
+                    </Link>
+
+                    {/* ADD TRANSACTION BUTTON */}
                     <Link
                       href={`/admin/transactions/add`}
                       className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition"
                     >
-                      Add Transaction
+                      Add
                     </Link>
+
                   </td>
                 </tr>
               );

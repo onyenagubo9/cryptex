@@ -1,44 +1,40 @@
-// components/AdminGuard.tsx
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { useEffect, useState } from "react";
 import { auth } from "@/firebase/config";
-import { isAdminUid } from "@/lib/checkAdmin";
+import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 
-export default function AdminGuard({ children }: { children: ReactNode }) {
-  const [loading, setLoading] = useState(true);
+export default function AdminGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const [checking, setChecking] = useState(true);
+  const [allowed, setAllowed] = useState(false);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      console.log("AUTH USER:", user);
+
       if (!user) {
-        router.replace("/admin/login");
+        router.push("/admin/login");
         return;
       }
 
-      const ok = await isAdminUid(user.uid);
-      if (!ok) {
-        // not admin: sign out and redirect
-        await signOut(auth);
-        router.replace("/admin/login");
-        return;
+      // admin email check
+      if (user.email === "admin@gmail.com") {
+        setAllowed(true);
+      } else {
+        router.push("/admin/login");
       }
 
-      setLoading(false);
+      setChecking(false);
     });
 
     return () => unsub();
-  }, [router]);
+  }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Loading admin...</p>
-      </div>
-    );
-  }
+  if (checking) return <div className="p-6">Loading admin...</div>;
+
+  if (!allowed) return null;
 
   return <>{children}</>;
 }
