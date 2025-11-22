@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 import { AuthProvider } from "@/context/AuthContext";
 
 export const metadata = {
-  title: "Cryptex Dashboard",
+  title: "Cryptex Wallet",
   description: "Your crypto management platform",
 };
 
