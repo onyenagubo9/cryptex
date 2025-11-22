@@ -23,9 +23,11 @@ export default function EditTransactionPage() {
   const params = useParams();
   const router = useRouter();
 
-  // SAFE PARAM HANDLING
+  // Safe param handling
   const txidRaw = params?.txid;
-  const txid = Array.isArray(txidRaw) ? txidRaw[0] : txidRaw || "";
+  const txid: string = Array.isArray(txidRaw)
+    ? txidRaw[0]
+    : txidRaw ?? "";
 
   const [form, setForm] = useState<TransactionData>({
     amount: "",
@@ -34,10 +36,10 @@ export default function EditTransactionPage() {
   });
 
   const [userId, setUserId] = useState<string>("");
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
 
   // LOAD TRANSACTION
   useEffect(() => {
@@ -45,7 +47,6 @@ export default function EditTransactionPage() {
       try {
         setLoading(true);
 
-        // Step 1: find which user owns this transaction
         const usersSnap = await getDocs(collection(db, "users"));
 
         for (const user of usersSnap.docs) {
@@ -65,23 +66,25 @@ export default function EditTransactionPage() {
             break;
           }
         }
-      } catch (err) {
-        console.error(err);
+      } catch {
         setError("Failed to load transaction.");
       } finally {
         setLoading(false);
       }
     };
 
-    loadTransaction();
+    if (txid) loadTransaction();
   }, [txid]);
 
-  const handleChange = (e: any) => {
+  // HANDLE INPUT CHANGE
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   // SAVE UPDATES
-  const handleSave = async (e: any) => {
+  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSaving(true);
     setError("");
@@ -101,17 +104,14 @@ export default function EditTransactionPage() {
       setTimeout(() => {
         router.push("/admin/transactions");
       }, 1500);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError("Failed to save transaction.");
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) {
-    return <div className="p-6">Loading transaction...</div>;
-  }
+  if (loading) return <div className="p-6">Loading transaction...</div>;
 
   return (
     <div className="p-6 max-w-xl">
