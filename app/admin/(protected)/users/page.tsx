@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { db } from "@/firebase/config";
 import { collection, getDocs } from "firebase/firestore";
 import { FiSearch } from "react-icons/fi";
+import Image from "next/image";
 
 interface User {
   id: string;
@@ -27,16 +28,20 @@ export default function UsersPage() {
       try {
         const snap = await getDocs(collection(db, "users"));
 
-        const list: User[] = snap.docs.map((doc) => ({
-          id: doc.id,
-          uid: doc.data().uid,
-          name: doc.data().name,
-          email: doc.data().email,
-          image: doc.data().image,
-          accountBalance: doc.data().accountBalance,
-          fuelMoney: doc.data().fuelMoney,
-          totalProfit: doc.data().totalProfit,
-        }));
+        const list: User[] = snap.docs.map((doc) => {
+          const d = doc.data();
+
+          return {
+            id: doc.id,
+            uid: d.uid ?? "",
+            name: d.name ?? "No Name",
+            email: d.email ?? "No Email",
+            image: d.image,
+            accountBalance: Number(d.accountBalance || 0),
+            fuelMoney: Number(d.fuelMoney || 0),
+            totalProfit: Number(d.totalProfit || 0),
+          };
+        });
 
         setUsers(list);
       } catch (err) {
@@ -49,14 +54,16 @@ export default function UsersPage() {
     loadUsers();
   }, []);
 
-  const filtered = users.filter((u) =>
-    u.email.toLowerCase().includes(search.toLowerCase()) ||
-    u.name?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = users.filter((u) => {
+    const s = search.toLowerCase();
+    return (
+      u.email.toLowerCase().includes(s) ||
+      (u.name?.toLowerCase().includes(s) ?? false)
+    );
+  });
 
   return (
     <div className="p-6">
-
       <h1 className="text-3xl font-bold mb-6">Users</h1>
 
       {/* SEARCH BAR */}
@@ -68,7 +75,9 @@ export default function UsersPage() {
             placeholder="Search by email or name..."
             className="w-full outline-none text-gray-700"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setSearch(e.target.value)
+            }
           />
         </div>
       </div>
@@ -93,34 +102,37 @@ export default function UsersPage() {
 
             <tbody>
               {filtered.map((user) => (
-                <tr key={user.id} className="border-b hover:bg-gray-50 transition">
-                  
+                <tr
+                  key={user.id}
+                  className="border-b hover:bg-gray-50 transition"
+                >
                   {/* USER + IMAGE */}
                   <td className="p-3 flex items-center gap-3">
-                    <img
-                      src={user.image || "https://via.placeholder.com/40"}
+                    <Image
+                      src={user.image || "/placeholder.png"}
                       alt={user.name}
+                      width={40}
+                      height={40}
                       className="w-10 h-10 rounded-full object-cover border"
                     />
-                    <span className="font-medium">{user.name || "No Name"}</span>
+                    <span className="font-medium">{user.name}</span>
                   </td>
 
                   <td className="p-3">{user.email}</td>
 
                   <td className="p-3 font-semibold text-blue-600">
-                    ${user.accountBalance?.toLocaleString() || 0}
+                    ${user.accountBalance?.toLocaleString()}
                   </td>
 
                   <td className="p-3 font-semibold text-yellow-600">
-                    ${user.fuelMoney?.toLocaleString() || 0}
+                    ${user.fuelMoney?.toLocaleString()}
                   </td>
 
                   <td className="p-3 font-semibold text-green-600">
-                    ${user.totalProfit?.toLocaleString() || 0}
+                    ${user.totalProfit?.toLocaleString()}
                   </td>
 
                   <td className="p-3 text-right flex gap-2 justify-end">
-                    
                     {/* VIEW BUTTON */}
                     <Link
                       href={`/admin/users/${user.uid}`}
@@ -136,9 +148,7 @@ export default function UsersPage() {
                     >
                       Edit
                     </Link>
-
                   </td>
-
                 </tr>
               ))}
             </tbody>

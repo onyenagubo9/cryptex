@@ -8,8 +8,12 @@ import Link from "next/link";
 import { FiArrowLeft } from "react-icons/fi";
 
 export default function EditUserPage() {
-  const { uid } = useParams();
+  const params = useParams();
   const router = useRouter();
+
+  // 🔥 FIX — uid ALWAYS a string (prevents Firestore overload error)
+  const rawUid = Array.isArray(params.uid) ? params.uid[0] : params.uid;
+  const uid = rawUid ?? "";
 
   const [form, setForm] = useState({
     name: "",
@@ -31,7 +35,7 @@ export default function EditUserPage() {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const ref = doc(db, "users", uid as string);
+        const ref = doc(db, "users", uid);
         const snap = await getDoc(ref);
 
         if (!snap.exists()) {
@@ -57,20 +61,22 @@ export default function EditUserPage() {
       }
     };
 
-    loadUser();
+    if (uid) loadUser();
   }, [uid]);
 
   // -----------------------------------------------------
-  // HANDLE INPUT CHANGE
+  // HANDLE INPUT CHANGE (Fully Typed)
   // -----------------------------------------------------
-  const handleChange = (e: any) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   // -----------------------------------------------------
-  // SAVE CHANGES
+  // SAVE CHANGES (Fully Typed)
   // -----------------------------------------------------
-  const handleSave = async (e: any) => {
+  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     setSaving(true);
@@ -78,15 +84,18 @@ export default function EditUserPage() {
     setSuccess("");
 
     try {
-      const ref = doc(db, "users", uid as string);
+      const ref = doc(db, "users", uid);
 
       await updateDoc(ref, {
         name: form.name.trim(),
         email: form.email.trim(),
         image: form.image.trim(),
-        accountBalance: form.accountBalance, // stored as string in Firestore
+
+        // ❗ accountBalance & totalProfit stored as strings in Firestore
+        accountBalance: form.accountBalance,
+        totalProfit: form.totalProfit,
+
         fuelMoney: Number(form.fuelMoney),
-        totalProfit: form.totalProfit, // stored as string in Firestore
       });
 
       setSuccess("User updated successfully!");
@@ -105,12 +114,8 @@ export default function EditUserPage() {
   if (loading) return <p className="p-6">Loading user...</p>;
   if (error) return <p className="p-6 text-red-500">{error}</p>;
 
-  // -----------------------------------------------------
-  // UI
-  // -----------------------------------------------------
   return (
     <div className="p-6 max-w-2xl">
-
       {/* Back Button */}
       <Link
         href={`/admin/users/${uid}`}
@@ -197,7 +202,7 @@ export default function EditUserPage() {
           />
         </div>
 
-        {/* SUCCESS AND ERROR */}
+        {/* STATUS */}
         {success && <p className="text-green-600">{success}</p>}
         {error && <p className="text-red-600">{error}</p>}
 

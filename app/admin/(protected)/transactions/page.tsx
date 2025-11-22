@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { db } from "@/firebase/config";
-import { collectionGroup, getDocs, doc, getDoc } from "firebase/firestore";
+import {
+  collectionGroup,
+  getDocs,
+  doc,
+  getDoc,
+  Timestamp,
+} from "firebase/firestore";
 import Link from "next/link";
 
 interface Transaction {
@@ -10,7 +16,7 @@ interface Transaction {
   amount: number;
   type: string;
   description: string;
-  createdAt: any;
+  createdAt: Timestamp | string;
   userId: string;
   userEmail: string;
 }
@@ -35,15 +41,15 @@ export default function AllTransactionsPage() {
             const userRef = doc(db, "users", userId);
             const userSnap = await getDoc(userRef);
             if (userSnap.exists()) {
-              userEmail = userSnap.data().email || "Unknown";
+              userEmail = (userSnap.data().email as string) || "Unknown";
             }
           }
 
           txList.push({
             id: txDoc.id,
             amount: Number(data.amount),
-            type: data.type,
-            description: data.description,
+            type: data.type as string,
+            description: data.description as string,
             createdAt: data.createdAt,
             userId,
             userEmail,
@@ -52,12 +58,16 @@ export default function AllTransactionsPage() {
 
         // Sort newest first
         txList.sort((a, b) => {
-          const da = a.createdAt?.toDate
-            ? a.createdAt.toDate()
-            : new Date(a.createdAt?.toString().replace(" at ", " "));
-          const dbb = b.createdAt?.toDate
-            ? b.createdAt.toDate()
-            : new Date(b.createdAt?.toString().replace(" at ", " "));
+          const da =
+            a.createdAt instanceof Timestamp
+              ? a.createdAt.toDate()
+              : new Date(a.createdAt);
+
+          const dbb =
+            b.createdAt instanceof Timestamp
+              ? b.createdAt.toDate()
+              : new Date(b.createdAt);
+
           return dbb.getTime() - da.getTime();
         });
 
@@ -78,7 +88,6 @@ export default function AllTransactionsPage() {
 
   return (
     <div className="p-6">
-
       <h1 className="text-3xl font-bold mb-6">All Transactions</h1>
 
       <div className="overflow-auto rounded-xl shadow border border-gray-200 bg-white">
@@ -96,16 +105,11 @@ export default function AllTransactionsPage() {
 
           <tbody>
             {transactions.map((tx) => {
-              let date;
-              if (tx.createdAt?.toDate) {
-                date = tx.createdAt.toDate();
-              } else {
-                date = new Date(
-                  tx.createdAt?.toString().replace(" at ", " ")
-                );
-              }
+              const date =
+                tx.createdAt instanceof Timestamp
+                  ? tx.createdAt.toDate()
+                  : new Date(tx.createdAt);
 
-              // Color badges
               const typeColor =
                 tx.type === "profit"
                   ? "text-green-600 bg-green-100"
@@ -155,8 +159,7 @@ export default function AllTransactionsPage() {
                   </td>
 
                   {/* ACTION BUTTONS */}
-                  <td className="p-3 space-x-2 flex">
-
+                  <td className="p-3 flex space-x-2">
                     {/* EDIT BUTTON */}
                     <Link
                       href={`/admin/transactions/${tx.id}/edit`}
@@ -165,20 +168,18 @@ export default function AllTransactionsPage() {
                       Edit
                     </Link>
 
-                    {/* ADD TRANSACTION BUTTON */}
+                    {/* ADD TRANSACTION */}
                     <Link
                       href={`/admin/transactions/add`}
                       className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition"
                     >
                       Add
                     </Link>
-
                   </td>
                 </tr>
               );
             })}
           </tbody>
-
         </table>
       </div>
     </div>

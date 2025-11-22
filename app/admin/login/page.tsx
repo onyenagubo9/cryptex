@@ -9,22 +9,25 @@ import { doc, getDoc } from "firebase/firestore";
 export default function AdminLoginPage() {
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
 
-  const handleLogin = async (e: React.FormEvent) => {
+  // -----------------------------
+  // HANDLE LOGIN
+  // -----------------------------
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      // Sign in with Firebase
+      // Sign into Firebase Auth
       const creds = await signInWithEmailAndPassword(auth, email, password);
       const uid = creds.user.uid;
 
-      // Check if the user is an admin in Firestore
+      // Check admin privileges
       const adminRef = doc(db, "admins", uid);
       const adminSnap = await getDoc(adminRef);
 
@@ -34,51 +37,64 @@ export default function AdminLoginPage() {
         return;
       }
 
-      // Success → redirect to admin dashboard
       router.push("/admin");
-    } catch (err: any) {
-      setError(err.message || "Login failed");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Login failed. Try again.";
+      setError(message);
     } finally {
       setLoading(false);
     }
   };
 
+  // -----------------------------
+  // UI
+  // -----------------------------
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <div className="w-full max-w-md bg-white rounded-lg shadow p-6">
-        <h1 className="text-2xl font-bold mb-4">Admin Login</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center">Admin Login</h1>
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-5">
+
+          {/* EMAIL */}
           <div>
-            <label className="block text-sm font-medium">Email</label>
+            <label className="block text-sm font-medium mb-1">Email</label>
             <input
               type="email"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full mt-1 p-2 border rounded"
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setEmail(e.target.value)
+              }
+              className="w-full mt-1 p-3 border rounded-lg bg-gray-50"
               placeholder="admin@example.com"
             />
           </div>
 
+          {/* PASSWORD */}
           <div>
-            <label className="block text-sm font-medium">Password</label>
+            <label className="block text-sm font-medium mb-1">Password</label>
             <input
               type="password"
               required
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full mt-1 p-2 border rounded"
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setPassword(e.target.value)
+              }
+              className="w-full mt-1 p-3 border rounded-lg bg-gray-50"
               placeholder="********"
             />
           </div>
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {/* ERROR MESSAGE */}
+          {error && <p className="text-red-600 text-sm">{error}</p>}
 
+          {/* SUBMIT BUTTON */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-60"
+            className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-60"
           >
             {loading ? "Logging in..." : "Login"}
           </button>

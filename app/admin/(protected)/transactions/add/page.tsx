@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { db } from "@/firebase/config";
 import {
   doc,
@@ -9,7 +9,7 @@ import {
   addDoc,
   collection,
   getDoc,
-  getDocs
+  getDocs,
 } from "firebase/firestore";
 import Link from "next/link";
 import { FiArrowLeft } from "react-icons/fi";
@@ -51,11 +51,17 @@ export default function AddTransactionPage() {
     loadUsers();
   }, []);
 
-  const handleChange = (e: any) => {
+  // HANDLE INPUT CHANGE — fully typed
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: any) => {
+  // SUBMIT HANDLER — fully typed
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!selectedUser) {
@@ -69,15 +75,12 @@ export default function AddTransactionPage() {
 
     try {
       // Add transaction
-      await addDoc(
-        collection(db, "users", selectedUser, "transactions"),
-        {
-          amount: form.amount,
-          type: form.type,
-          description: form.description,
-          createdAt: new Date().toString(),
-        }
-      );
+      await addDoc(collection(db, "users", selectedUser, "transactions"), {
+        amount: form.amount,
+        type: form.type,
+        description: form.description,
+        createdAt: new Date().toISOString(),
+      });
 
       // Fetch user record
       const userRef = doc(db, "users", selectedUser);
@@ -111,7 +114,7 @@ export default function AddTransactionPage() {
       if (form.type === "fuel") newFuel += amount;
       if (form.type === "profit") newProfit += amount;
 
-      // Update user
+      // Update user wallet totals
       await updateDoc(userRef, {
         accountBalance: newBalance.toLocaleString(),
         fuelMoney: newFuel,
@@ -133,7 +136,6 @@ export default function AddTransactionPage() {
 
   return (
     <div className="p-6 max-w-xl">
-
       <Link
         href={`/admin/transactions`}
         className="flex items-center text-blue-600 hover:underline mb-6"
@@ -147,7 +149,6 @@ export default function AddTransactionPage() {
         onSubmit={handleSubmit}
         className="bg-white p-6 shadow rounded-xl space-y-6 border"
       >
-
         {/* SELECT USER */}
         <div>
           <label className="block font-medium mb-1">Select User</label>

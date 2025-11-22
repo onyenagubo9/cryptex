@@ -3,9 +3,16 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { db } from "@/firebase/config";
-import { doc, getDoc, collection, getDocs } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  collection,
+  getDocs,
+  Timestamp,
+} from "firebase/firestore";
 import { FiMail, FiArrowLeft, FiUser } from "react-icons/fi";
 import Link from "next/link";
+import Image from "next/image";
 
 // ----------------------
 // TYPES
@@ -15,7 +22,7 @@ interface Transaction {
   amount: number;
   type: string;
   description: string;
-  createdAt: any; // Timestamp or string
+  createdAt: Timestamp | string;
 }
 
 interface UserData {
@@ -32,18 +39,25 @@ interface UserData {
 // USER DETAILS PAGE
 // ----------------------
 export default function UserDetailsPage() {
-  const { uid } = useParams();
+  const params = useParams();
+
+  // Ensure uid is ALWAYS a string
+  const rawUid = Array.isArray(params.uid) ? params.uid[0] : params.uid;
+  const uid = rawUid ?? ""; // 🔥 FIX: guarantee parameter is string
+
   const [user, setUser] = useState<UserData | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!uid) return; // Safety check
+
     const loadDetails = async () => {
       try {
         // ----------------------
         // Load user info
         // ----------------------
-        const userRef = doc(db, "users", uid as string);
+        const userRef = doc(db, "users", uid);
         const userSnap = await getDoc(userRef);
 
         if (userSnap.exists()) {
@@ -62,7 +76,7 @@ export default function UserDetailsPage() {
         // ----------------------
         // Load transactions
         // ----------------------
-        const txRef = collection(db, "users", uid as string, "transactions");
+        const txRef = collection(db, "users", uid, "transactions");
         const txSnap = await getDocs(txRef);
 
         const txList: Transaction[] = txSnap.docs.map((d) => {
@@ -71,25 +85,25 @@ export default function UserDetailsPage() {
           return {
             id: d.id,
             amount: Number(data.amount ?? 0),
-            type: data.type ?? "unknown",
-            description: data.description ?? "",
-            createdAt:
-              data.createdAt ??
-              { toDate: () => new Date() }, // fallback to avoid errors
+            type: (data.type as string) ?? "unknown",
+            description: (data.description as string) ?? "",
+            createdAt: data.createdAt ?? new Date().toISOString(),
           };
         });
 
         // Sort by newest
         txList.sort((a, b) => {
-          const da = a.createdAt?.toDate
-            ? a.createdAt.toDate()
-            : new Date(a.createdAt.replace?.(" at ", " ") || a.createdAt);
+          const dateA =
+            a.createdAt instanceof Timestamp
+              ? a.createdAt.toDate()
+              : new Date(a.createdAt);
 
-          const dbb = b.createdAt?.toDate
-            ? b.createdAt.toDate()
-            : new Date(b.createdAt.replace?.(" at ", " ") || b.createdAt);
+          const dateB =
+            b.createdAt instanceof Timestamp
+              ? b.createdAt.toDate()
+              : new Date(b.createdAt);
 
-          return dbb.getTime() - da.getTime();
+          return dateB.getTime() - dateA.getTime();
         });
 
         setTransactions(txList);
@@ -111,17 +125,16 @@ export default function UserDetailsPage() {
     return <p className="p-6 text-red-500">User not found.</p>;
   }
 
-  // Safe date formatting function
-  const formatDate = (createdAt: any) => {
-    if (createdAt?.toDate) return createdAt.toDate().toLocaleString();
-    if (typeof createdAt === "string")
-      return new Date(createdAt.replace(" at ", " ")).toLocaleString();
-    return "N/A";
+  // Safe date formatting
+  const formatDate = (createdAt: Timestamp | string) => {
+    if (createdAt instanceof Timestamp)
+      return createdAt.toDate().toLocaleString();
+
+    return new Date(createdAt).toLocaleString();
   };
 
   return (
     <div className="p-6 space-y-8">
-
       {/* BACK BUTTON */}
       <Link
         href="/admin/users"
@@ -132,11 +145,12 @@ export default function UserDetailsPage() {
 
       {/* USER INFO CARD */}
       <div className="bg-white shadow rounded-2xl p-6 flex flex-col md:flex-row gap-6 border">
-
         {/* PROFILE IMAGE */}
-        <img
+        <Image
           src={user.image || "https://via.placeholder.com/150"}
           alt={user.name}
+          width={128}
+          height={128}
           className="w-32 h-32 rounded-xl object-cover border"
         />
 
@@ -155,7 +169,6 @@ export default function UserDetailsPage() {
 
         {/* ACCOUNT SUMMARY */}
         <div className="ml-auto flex flex-col justify-between">
-
           <p className="text-xl font-bold text-blue-700">
             Account Balance: ${user.accountBalance?.toLocaleString()}
           </p>
@@ -167,7 +180,6 @@ export default function UserDetailsPage() {
           <p className="text-lg font-semibold text-green-600">
             Total Profit: ${user.totalProfit?.toLocaleString()}
           </p>
-
         </div>
       </div>
 
@@ -202,7 +214,6 @@ export default function UserDetailsPage() {
             </table>
           </div>
         )}
-
       </div>
     </div>
   );
