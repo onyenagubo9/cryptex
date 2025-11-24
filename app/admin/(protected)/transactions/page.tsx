@@ -88,7 +88,18 @@ export default function AllTransactionsPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">All Transactions</h1>
+
+      {/* HEADER WITH ADD BUTTON */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">All Transactions</h1>
+
+        <Link
+          href="/admin/transactions/add"
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+        >
+          + Add Transaction
+        </Link>
+      </div>
 
       <div className="overflow-auto rounded-xl shadow border border-gray-200 bg-white">
         <table className="min-w-full table-auto">
@@ -126,7 +137,6 @@ export default function AllTransactionsPage() {
                   key={tx.id}
                   className="border-b hover:bg-gray-50 transition"
                 >
-                  {/* USER EMAIL LINK */}
                   <td className="p-3">
                     <Link
                       href={`/admin/users/${tx.userId}`}
@@ -136,12 +146,10 @@ export default function AllTransactionsPage() {
                     </Link>
                   </td>
 
-                  {/* AMOUNT */}
                   <td className="p-3 font-semibold">
                     ${tx.amount.toLocaleString()}
                   </td>
 
-                  {/* TYPE */}
                   <td className="p-3">
                     <span
                       className={`px-3 py-1 rounded-full text-sm font-medium ${typeColor}`}
@@ -150,17 +158,13 @@ export default function AllTransactionsPage() {
                     </span>
                   </td>
 
-                  {/* DESCRIPTION */}
                   <td className="p-3 text-gray-700">{tx.description}</td>
 
-                  {/* DATE */}
                   <td className="p-3 text-gray-600">
                     {date.toLocaleString()}
                   </td>
 
-                  {/* ACTION BUTTONS */}
                   <td className="p-3 flex space-x-2">
-                    {/* EDIT BUTTON */}
                     <Link
                       href={`/admin/transactions/${tx.id}/edit`}
                       className="px-3 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition"
@@ -168,7 +172,6 @@ export default function AllTransactionsPage() {
                       Edit
                     </Link>
 
-                    {/* ADD TRANSACTION */}
                     <Link
                       href={`/admin/transactions/add`}
                       className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition"
@@ -180,6 +183,7 @@ export default function AllTransactionsPage() {
               );
             })}
           </tbody>
+
         </table>
       </div>
     </div>

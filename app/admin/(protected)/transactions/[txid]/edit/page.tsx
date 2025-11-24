@@ -23,11 +23,7 @@ export default function EditTransactionPage() {
   const params = useParams();
   const router = useRouter();
 
-  // Safe param handling
-  const txidRaw = params?.txid;
-  const txid: string = Array.isArray(txidRaw)
-    ? txidRaw[0]
-    : txidRaw ?? "";
+  const txid = Array.isArray(params?.txid) ? params.txid[0] : params?.txid || "";
 
   const [form, setForm] = useState<TransactionData>({
     amount: "",
@@ -35,56 +31,50 @@ export default function EditTransactionPage() {
     description: "",
   });
 
-  const [userId, setUserId] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(true);
-  const [saving, setSaving] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
-  const [success, setSuccess] = useState<string>("");
+  const [userId, setUserId] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  // LOAD TRANSACTION
   useEffect(() => {
     const loadTransaction = async () => {
       try {
-        setLoading(true);
-
         const usersSnap = await getDocs(collection(db, "users"));
 
-        for (const user of usersSnap.docs) {
-          const txRef = doc(db, "users", user.id, "transactions", txid);
+        for (const u of usersSnap.docs) {
+          const txRef = doc(db, "users", u.id, "transactions", txid);
           const txSnap = await getDoc(txRef);
 
           if (txSnap.exists()) {
-            const tx = txSnap.data();
+            const data = txSnap.data();
 
-            setUserId(user.id);
+            setUserId(u.id);
             setForm({
-              amount: tx.amount?.toString() ?? "",
-              type: tx.type ?? "debit",
-              description: tx.description ?? "",
+              amount: data.amount?.toString() ?? "",
+              type: data.type ?? "debit",
+              description: data.description ?? "",
             });
 
             break;
           }
         }
-      } catch {
+      } catch (err) {
+        console.error(err);
         setError("Failed to load transaction.");
       } finally {
         setLoading(false);
       }
     };
 
-    if (txid) loadTransaction();
+    loadTransaction();
   }, [txid]);
 
-  // HANDLE INPUT CHANGE
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: any) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // SAVE UPDATES
-  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSave = async (e: any) => {
     e.preventDefault();
     setSaving(true);
     setError("");
@@ -99,13 +89,12 @@ export default function EditTransactionPage() {
         description: form.description,
       });
 
-      setSuccess("Transaction updated successfully!");
+      setSuccess("Transaction updated!");
 
-      setTimeout(() => {
-        router.push("/admin/transactions");
-      }, 1500);
-    } catch {
-      setError("Failed to save transaction.");
+      setTimeout(() => router.push("/admin/transactions"), 1200);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to update transaction.");
     } finally {
       setSaving(false);
     }
@@ -115,57 +104,48 @@ export default function EditTransactionPage() {
 
   return (
     <div className="p-6 max-w-xl">
-
-      <Link
-        href="/admin/transactions"
-        className="flex items-center text-blue-600 hover:underline mb-6"
-      >
+      <Link href="/admin/transactions" className="flex items-center text-blue-600 hover:underline mb-6">
         <FiArrowLeft className="mr-2" /> Back
       </Link>
 
       <h1 className="text-3xl font-bold mb-6">Edit Transaction</h1>
 
-      <form
-        onSubmit={handleSave}
-        className="bg-white p-6 shadow rounded-xl space-y-6 border"
-      >
-        {/* AMOUNT */}
+      <form onSubmit={handleSave} className="bg-white p-6 shadow rounded-xl space-y-6">
+
         <div>
           <label className="block font-medium mb-1">Amount</label>
           <input
             type="number"
             name="amount"
-            className="w-full p-3 border rounded-lg"
             value={form.amount}
             onChange={handleChange}
+            className="w-full p-3 border rounded-lg"
             required
           />
         </div>
 
-        {/* TYPE */}
         <div>
           <label className="block font-medium mb-1">Type</label>
           <select
             name="type"
-            className="w-full p-3 border rounded-lg"
             value={form.type}
             onChange={handleChange}
+            className="w-full p-3 border rounded-lg"
           >
             <option value="debit">Debit</option>
             <option value="profit">Profit</option>
             <option value="fuel">Fuel</option>
-            <option value="withdrawal">Withdrawal</option>
+            <option value="deposit">deposit</option>
           </select>
         </div>
 
-        {/* DESCRIPTION */}
         <div>
           <label className="block font-medium mb-1">Description</label>
           <textarea
             name="description"
-            className="w-full p-3 border rounded-lg"
             value={form.description}
             onChange={handleChange}
+            className="w-full p-3 border rounded-lg"
             required
           ></textarea>
         </div>
@@ -178,7 +158,7 @@ export default function EditTransactionPage() {
           disabled={saving}
           className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition"
         >
-          {saving ? "Saving..." : "Save Changes"}
+          {saving ? "Saving…" : "Save Changes"}
         </button>
       </form>
     </div>

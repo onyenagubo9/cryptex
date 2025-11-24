@@ -10,6 +10,7 @@ import {
   collection,
   getDoc,
   getDocs,
+  Timestamp,
 } from "firebase/firestore";
 import Link from "next/link";
 import { FiArrowLeft } from "react-icons/fi";
@@ -36,7 +37,6 @@ export default function AddTransactionPage() {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
-  // Load user list for dropdown
   useEffect(() => {
     const loadUsers = async () => {
       const snap = await getDocs(collection(db, "users"));
@@ -51,17 +51,11 @@ export default function AddTransactionPage() {
     loadUsers();
   }, []);
 
-  // HANDLE INPUT CHANGE — fully typed
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // SUBMIT HANDLER — fully typed
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!selectedUser) {
@@ -74,15 +68,14 @@ export default function AddTransactionPage() {
     setSuccess("");
 
     try {
-      // Add transaction
+      // Add the transaction
       await addDoc(collection(db, "users", selectedUser, "transactions"), {
         amount: form.amount,
         type: form.type,
         description: form.description,
-        createdAt: new Date().toISOString(),
+        createdAt: Timestamp.now(), // FIXED: Real Firebase Timestamp
       });
 
-      // Fetch user record
       const userRef = doc(db, "users", selectedUser);
       const userSnap = await getDoc(userRef);
 
@@ -94,13 +87,9 @@ export default function AddTransactionPage() {
 
       const user = userSnap.data();
 
-      const currentBalance =
-        Number(user.accountBalance?.toString().replace(/,/g, "")) || 0;
-
+      const currentBalance = Number(user.accountBalance?.toString().replace(/,/g, "")) || 0;
       const currentFuel = Number(user.fuelMoney || 0);
-
-      const currentProfit =
-        Number(user.totalProfit?.toString().replace(/,/g, "")) || 0;
+      const currentProfit = Number(user.totalProfit?.toString().replace(/,/g, "")) || 0;
 
       const amount = Number(form.amount);
 
@@ -108,13 +97,11 @@ export default function AddTransactionPage() {
       let newFuel = currentFuel;
       let newProfit = currentProfit;
 
-      // Apply logic
       if (form.type === "debit") newBalance -= amount;
       if (form.type === "withdrawal") newBalance -= amount;
       if (form.type === "fuel") newFuel += amount;
       if (form.type === "profit") newProfit += amount;
 
-      // Update user wallet totals
       await updateDoc(userRef, {
         accountBalance: newBalance.toLocaleString(),
         fuelMoney: newFuel,
@@ -136,20 +123,15 @@ export default function AddTransactionPage() {
 
   return (
     <div className="p-6 max-w-xl">
-      <Link
-        href={`/admin/transactions`}
-        className="flex items-center text-blue-600 hover:underline mb-6"
-      >
+
+      <Link href="/admin/transactions" className="flex items-center text-blue-600 hover:underline mb-6">
         <FiArrowLeft className="mr-2" /> Back
       </Link>
 
       <h1 className="text-3xl font-bold mb-6">Add Transaction</h1>
 
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-6 shadow rounded-xl space-y-6 border"
-      >
-        {/* SELECT USER */}
+      <form onSubmit={handleSubmit} className="bg-white p-6 shadow rounded-xl space-y-6 border">
+
         <div>
           <label className="block font-medium mb-1">Select User</label>
           <select
@@ -159,60 +141,55 @@ export default function AddTransactionPage() {
             required
           >
             <option value="">-- Select a User --</option>
-            {users.map((user) => (
-              <option key={user.uid} value={user.uid}>
-                {user.name} ({user.email})
+            {users.map((u) => (
+              <option key={u.uid} value={u.uid}>
+                {u.name} ({u.email})
               </option>
             ))}
           </select>
         </div>
 
-        {/* AMOUNT */}
         <div>
           <label className="block font-medium mb-1">Amount</label>
           <input
             type="number"
             name="amount"
-            className="w-full p-3 border rounded-lg"
             value={form.amount}
             onChange={handleChange}
+            className="w-full p-3 border rounded-lg"
             required
           />
         </div>
 
-        {/* TYPE */}
         <div>
           <label className="block font-medium mb-1">Type</label>
           <select
             name="type"
-            className="w-full p-3 border rounded-lg"
             value={form.type}
             onChange={handleChange}
+            className="w-full p-3 border rounded-lg"
           >
             <option value="debit">Debit</option>
             <option value="profit">Profit</option>
             <option value="fuel">Fuel</option>
-            <option value="withdrawal">Withdrawal</option>
+            <option value="deposit">deposit</option>
           </select>
         </div>
 
-        {/* DESCRIPTION */}
         <div>
           <label className="block font-medium mb-1">Description</label>
           <textarea
             name="description"
-            className="w-full p-3 border rounded-lg"
             value={form.description}
             onChange={handleChange}
+            className="w-full p-3 border rounded-lg"
             required
           ></textarea>
         </div>
 
-        {/* STATUS */}
         {success && <p className="text-green-600">{success}</p>}
         {error && <p className="text-red-600">{error}</p>}
 
-        {/* SUBMIT */}
         <button
           type="submit"
           disabled={loading}
@@ -220,6 +197,7 @@ export default function AddTransactionPage() {
         >
           {loading ? "Saving..." : "Add Transaction"}
         </button>
+
       </form>
     </div>
   );
