@@ -11,11 +11,11 @@ import Image from "next/image";
 export default function AdminLoginPage() {
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [showPage, setShowPage] = useState(false);
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [showPage, setShowPage] = useState<boolean>(false);
 
   // Delay page load for smooth animation
   useEffect(() => {
@@ -23,7 +23,10 @@ export default function AdminLoginPage() {
     return () => clearTimeout(t);
   }, []);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  // ------------------------
+  // LOGIN HANDLER (NO ANY)
+  // ------------------------
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setLoading(true);
@@ -32,7 +35,7 @@ export default function AdminLoginPage() {
       const creds = await signInWithEmailAndPassword(auth, email, password);
       const uid = creds.user.uid;
 
-      // Check admin in Firestore
+      // Check admin privileges
       const adminRef = doc(db, "admins", uid);
       const adminSnap = await getDoc(adminRef);
 
@@ -43,14 +46,18 @@ export default function AdminLoginPage() {
       }
 
       router.push("/admin");
-    } catch (err: any) {
-      setError(err.message || "Login failed. Try again.");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Login failed. Try again.";
+      setError(message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Loading screen before showing login UI
+  // ------------------------
+  // LOADING SCREEN
+  // ------------------------
   if (!showPage) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-black text-yellow-400 text-xl font-semibold">
@@ -62,10 +69,13 @@ export default function AdminLoginPage() {
     );
   }
 
+  // ------------------------
+  // MAIN LOGIN UI
+  // ------------------------
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-black via-gray-900 to-gray-800 px-6">
       <div className="bg-gray-900/80 p-10 rounded-3xl shadow-xl w-full max-w-md text-white transition-all duration-700">
-
+        
         {/* Logo */}
         <div className="flex justify-center mb-6">
           <Image
@@ -91,7 +101,9 @@ export default function AdminLoginPage() {
               type="email"
               placeholder="Admin Email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setEmail(e.target.value)
+              }
               required
               className="w-full pl-10 pr-3 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 transition text-white"
             />
@@ -104,7 +116,9 @@ export default function AdminLoginPage() {
               type="password"
               placeholder="Admin Password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setPassword(e.target.value)
+              }
               required
               className="w-full pl-10 pr-3 py-3 rounded-xl bg-gray-800 border border-gray-700 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400 transition text-white"
             />

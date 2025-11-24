@@ -23,7 +23,9 @@ export default function EditTransactionPage() {
   const params = useParams();
   const router = useRouter();
 
-  const txid = Array.isArray(params?.txid) ? params.txid[0] : params?.txid || "";
+  // SAFELY READ DYNAMIC ROUTE PARAM
+  const rawId = params?.txid;
+  const txid = Array.isArray(rawId) ? rawId[0] : rawId || "";
 
   const [form, setForm] = useState<TransactionData>({
     amount: "",
@@ -31,12 +33,15 @@ export default function EditTransactionPage() {
     description: "",
   });
 
-  const [userId, setUserId] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [userId, setUserId] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
 
+  // -------------------------------------------------------
+  // LOAD TRANSACTION DATA
+  // -------------------------------------------------------
   useEffect(() => {
     const loadTransaction = async () => {
       try {
@@ -50,6 +55,7 @@ export default function EditTransactionPage() {
             const data = txSnap.data();
 
             setUserId(u.id);
+
             setForm({
               amount: data.amount?.toString() ?? "",
               type: data.type ?? "debit",
@@ -70,11 +76,21 @@ export default function EditTransactionPage() {
     loadTransaction();
   }, [txid]);
 
-  const handleChange = (e: any) => {
+  // -------------------------------------------------------
+  // HANDLE INPUT CHANGE (TYPE SAFE)
+  // -------------------------------------------------------
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
+  ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSave = async (e: any) => {
+  // -------------------------------------------------------
+  // SAVE CHANGES (TYPE SAFE)
+  // -------------------------------------------------------
+  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSaving(true);
     setError("");
@@ -100,18 +116,27 @@ export default function EditTransactionPage() {
     }
   };
 
+  // -------------------------------------------------------
+  // UI
+  // -------------------------------------------------------
   if (loading) return <div className="p-6">Loading transaction...</div>;
 
   return (
     <div className="p-6 max-w-xl">
-      <Link href="/admin/transactions" className="flex items-center text-blue-600 hover:underline mb-6">
+      <Link
+        href="/admin/transactions"
+        className="flex items-center text-blue-600 hover:underline mb-6"
+      >
         <FiArrowLeft className="mr-2" /> Back
       </Link>
 
       <h1 className="text-3xl font-bold mb-6">Edit Transaction</h1>
 
-      <form onSubmit={handleSave} className="bg-white p-6 shadow rounded-xl space-y-6">
-
+      <form
+        onSubmit={handleSave}
+        className="bg-white p-6 shadow rounded-xl space-y-6 border"
+      >
+        {/* AMOUNT */}
         <div>
           <label className="block font-medium mb-1">Amount</label>
           <input
@@ -124,6 +149,7 @@ export default function EditTransactionPage() {
           />
         </div>
 
+        {/* TYPE */}
         <div>
           <label className="block font-medium mb-1">Type</label>
           <select
@@ -135,10 +161,11 @@ export default function EditTransactionPage() {
             <option value="debit">Debit</option>
             <option value="profit">Profit</option>
             <option value="fuel">Fuel</option>
-            <option value="deposit">deposit</option>
+            <option value="deposit">Deposit</option>
           </select>
         </div>
 
+        {/* DESCRIPTION */}
         <div>
           <label className="block font-medium mb-1">Description</label>
           <textarea
@@ -150,9 +177,11 @@ export default function EditTransactionPage() {
           ></textarea>
         </div>
 
+        {/* MESSAGES */}
         {success && <p className="text-green-600">{success}</p>}
         {error && <p className="text-red-600">{error}</p>}
 
+        {/* SAVE BUTTON */}
         <button
           type="submit"
           disabled={saving}
