@@ -5,13 +5,13 @@ import { useParams, useRouter } from "next/navigation";
 import { db } from "@/firebase/config";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import Link from "next/link";
+import Image from "next/image";
 import { FiArrowLeft } from "react-icons/fi";
 
 export default function EditUserPage() {
   const params = useParams();
   const router = useRouter();
 
-  // 🔥 FIX — uid ALWAYS a string (prevents Firestore overload error)
   const rawUid = Array.isArray(params.uid) ? params.uid[0] : params.uid;
   const uid = rawUid ?? "";
 
@@ -29,9 +29,7 @@ export default function EditUserPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // -----------------------------------------------------
   // LOAD USER DETAILS
-  // -----------------------------------------------------
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -54,7 +52,6 @@ export default function EditUserPage() {
           totalProfit: data.totalProfit?.toString() || "0",
         });
       } catch (err) {
-        console.error(err);
         setError("Failed to load user details.");
       } finally {
         setLoading(false);
@@ -64,21 +61,14 @@ export default function EditUserPage() {
     if (uid) loadUser();
   }, [uid]);
 
-  // -----------------------------------------------------
-  // HANDLE INPUT CHANGE (Fully Typed)
-  // -----------------------------------------------------
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // -----------------------------------------------------
-  // SAVE CHANGES (Fully Typed)
-  // -----------------------------------------------------
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     setSaving(true);
     setError("");
     setSuccess("");
@@ -90,127 +80,143 @@ export default function EditUserPage() {
         name: form.name.trim(),
         email: form.email.trim(),
         image: form.image.trim(),
-
-        // ❗ accountBalance & totalProfit stored as strings in Firestore
         accountBalance: form.accountBalance,
         totalProfit: form.totalProfit,
-
         fuelMoney: Number(form.fuelMoney),
       });
 
       setSuccess("User updated successfully!");
 
-      setTimeout(() => {
-        router.push(`/admin/users/${uid}`);
-      }, 1200);
+      setTimeout(() => router.push(`/admin/users/${uid}`), 1200);
     } catch (err) {
-      console.error(err);
       setError("Failed to save changes.");
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <p className="p-6">Loading user...</p>;
-  if (error) return <p className="p-6 text-red-500">{error}</p>;
+  if (loading)
+    return (
+      <p className="p-6 text-gray-300 animate-pulse">
+        Loading user details...
+      </p>
+    );
+
+  if (error)
+    return <p className="p-6 text-red-500 font-semibold">{error}</p>;
 
   return (
-    <div className="p-6 max-w-2xl">
-      {/* Back Button */}
+    <div className="p-6 max-w-3xl mx-auto">
+
+      {/* BACK BUTTON */}
       <Link
         href={`/admin/users/${uid}`}
-        className="flex items-center text-blue-600 hover:underline mb-6"
+        className="flex items-center gap-2 text-yellow-400 hover:text-yellow-300 transition mb-8"
       >
-        <FiArrowLeft className="mr-2" /> Back to User Details
+        <FiArrowLeft size={20} />
+        Back to User Details
       </Link>
 
-      <h1 className="text-3xl font-bold mb-6">Edit User</h1>
+      <h1 className="text-4xl font-extrabold text-white mb-8">
+        Edit User
+      </h1>
 
       <form
         onSubmit={handleSave}
-        className="space-y-6 bg-white rounded-xl p-6 shadow border border-gray-200"
+        className="bg-gray-900/70 backdrop-blur-xl border border-gray-800 shadow-2xl rounded-2xl p-8 space-y-6 text-white"
       >
+        {/* PROFILE PREVIEW */}
+        <div className="flex justify-center mb-6">
+          <Image
+            src={form.image || "/placeholder.png"}
+            alt="Profile"
+            width={110}
+            height={110}
+            className="rounded-full border-4 border-gray-700 shadow-lg"
+          />
+        </div>
+
         {/* NAME */}
         <div>
-          <label className="block font-medium mb-1">Full Name</label>
+          <label className="block text-gray-300 mb-1 font-medium">Full Name</label>
           <input
             type="text"
             name="name"
             value={form.name}
             onChange={handleChange}
-            className="w-full p-3 border rounded-lg"
+            className="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-yellow-400 focus:ring-yellow-400"
           />
         </div>
 
         {/* EMAIL */}
         <div>
-          <label className="block font-medium mb-1">Email Address</label>
+          <label className="block text-gray-300 mb-1 font-medium">Email Address</label>
           <input
             type="email"
             name="email"
             value={form.email}
             onChange={handleChange}
-            className="w-full p-3 border rounded-lg"
+            className="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-yellow-400"
           />
         </div>
 
-        {/* PROFILE IMAGE */}
+        {/* IMAGE URL */}
         <div>
-          <label className="block font-medium mb-1">Profile Image URL</label>
+          <label className="block text-gray-300 mb-1 font-medium">Profile Image URL</label>
           <input
             type="text"
             name="image"
             value={form.image}
             onChange={handleChange}
-            className="w-full p-3 border rounded-lg"
+            className="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-yellow-400"
           />
         </div>
 
         {/* ACCOUNT BALANCE */}
         <div>
-          <label className="block font-medium mb-1">Account Balance</label>
+          <label className="block text-gray-300 mb-1 font-medium">Account Balance</label>
           <input
             type="text"
             name="accountBalance"
             value={form.accountBalance}
             onChange={handleChange}
-            className="w-full p-3 border rounded-lg"
+            className="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-yellow-400"
           />
         </div>
 
         {/* FUEL MONEY */}
         <div>
-          <label className="block font-medium mb-1">Fuel Money</label>
+          <label className="block text-gray-300 mb-1 font-medium">Fuel Money</label>
           <input
             type="number"
             name="fuelMoney"
             value={form.fuelMoney}
             onChange={handleChange}
-            className="w-full p-3 border rounded-lg"
+            className="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-yellow-400"
           />
         </div>
 
         {/* TOTAL PROFIT */}
         <div>
-          <label className="block font-medium mb-1">Total Profit</label>
+          <label className="block text-gray-300 mb-1 font-medium">Total Profit</label>
           <input
             type="text"
             name="totalProfit"
             value={form.totalProfit}
             onChange={handleChange}
-            className="w-full p-3 border rounded-lg"
+            className="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-white focus:border-yellow-400"
           />
         </div>
 
         {/* STATUS */}
-        {success && <p className="text-green-600">{success}</p>}
-        {error && <p className="text-red-600">{error}</p>}
+        {success && <p className="text-green-400">{success}</p>}
+        {error && <p className="text-red-400">{error}</p>}
 
         {/* SAVE BUTTON */}
         <button
           type="submit"
           disabled={saving}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition"
+          className="w-full bg-yellow-400 text-black py-3 rounded-full font-bold hover:bg-yellow-500 hover:scale-[1.02] transition disabled:opacity-40"
         >
           {saving ? "Saving..." : "Save Changes"}
         </button>

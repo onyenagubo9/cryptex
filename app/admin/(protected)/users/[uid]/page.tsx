@@ -40,23 +40,18 @@ interface UserData {
 // ----------------------
 export default function UserDetailsPage() {
   const params = useParams();
-
-  // Ensure uid is ALWAYS a string
-  const rawUid = Array.isArray(params.uid) ? params.uid[0] : params.uid;
-  const uid = rawUid ?? ""; // 🔥 FIX: guarantee parameter is string
+  const uid = Array.isArray(params.uid) ? params.uid[0] : params.uid ?? "";
 
   const [user, setUser] = useState<UserData | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // ------------------ LOAD DATA ------------------
   useEffect(() => {
-    if (!uid) return; // Safety check
+    if (!uid) return;
 
     const loadDetails = async () => {
       try {
-        // ----------------------
-        // Load user info
-        // ----------------------
         const userRef = doc(db, "users", uid);
         const userSnap = await getDoc(userRef);
 
@@ -73,42 +68,33 @@ export default function UserDetailsPage() {
           });
         }
 
-        // ----------------------
-        // Load transactions
-        // ----------------------
         const txRef = collection(db, "users", uid, "transactions");
         const txSnap = await getDocs(txRef);
 
-        const txList: Transaction[] = txSnap.docs.map((d) => {
-          const data = d.data();
-
-          return {
-            id: d.id,
-            amount: Number(data.amount ?? 0),
-            type: (data.type as string) ?? "unknown",
-            description: (data.description as string) ?? "",
-            createdAt: data.createdAt ?? new Date().toISOString(),
-          };
-        });
+        const list: Transaction[] = txSnap.docs.map((d) => ({
+          id: d.id,
+          amount: Number(d.data().amount ?? 0),
+          type: d.data().type ?? "unknown",
+          description: d.data().description ?? "",
+          createdAt: d.data().createdAt ?? new Date().toISOString(),
+        }));
 
         // Sort by newest
-        txList.sort((a, b) => {
-          const dateA =
+        list.sort((a, b) => {
+          const A =
             a.createdAt instanceof Timestamp
               ? a.createdAt.toDate()
               : new Date(a.createdAt);
-
-          const dateB =
+          const B =
             b.createdAt instanceof Timestamp
               ? b.createdAt.toDate()
               : new Date(b.createdAt);
-
-          return dateB.getTime() - dateA.getTime();
+          return B.getTime() - A.getTime();
         });
 
-        setTransactions(txList);
+        setTransactions(list);
       } catch (err) {
-        console.error("Error loading user details:", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -117,97 +103,107 @@ export default function UserDetailsPage() {
     loadDetails();
   }, [uid]);
 
-  if (loading) {
-    return <p className="p-6">Loading user details...</p>;
-  }
+  if (loading)
+    return <p className="p-6 text-gray-300 animate-pulse">Loading user...</p>;
 
-  if (!user) {
-    return <p className="p-6 text-red-500">User not found.</p>;
-  }
+  if (!user) return <p className="p-6 text-red-500">User not found.</p>;
 
-  // Safe date formatting
   const formatDate = (createdAt: Timestamp | string) => {
     if (createdAt instanceof Timestamp)
       return createdAt.toDate().toLocaleString();
-
     return new Date(createdAt).toLocaleString();
   };
 
+  // ------------------ UI ------------------
   return (
-    <div className="p-6 space-y-8">
+    <div className="p-6 space-y-10 text-white">
+
       {/* BACK BUTTON */}
       <Link
         href="/admin/users"
-        className="flex items-center text-blue-600 hover:underline"
+        className="inline-flex items-center text-yellow-400 hover:text-yellow-500 transition"
       >
         <FiArrowLeft className="mr-2" /> Back to Users
       </Link>
 
-      {/* USER INFO CARD */}
-      <div className="bg-white shadow rounded-2xl p-6 flex flex-col md:flex-row gap-6 border">
-        {/* PROFILE IMAGE */}
+      {/* USER CARD */}
+      <div className="
+        bg-[#111]/60 backdrop-blur-xl p-6 rounded-2xl shadow-lg 
+        flex flex-col md:flex-row items-start gap-6 border border-gray-800
+      ">
         <Image
-          src={user.image || "https://via.placeholder.com/150"}
+          src={user.image || "/placeholder.png"}
           alt={user.name}
-          width={128}
-          height={128}
-          className="w-32 h-32 rounded-xl object-cover border"
+          width={120}
+          height={120}
+          className="rounded-xl border border-gray-700 object-cover shadow-md"
         />
 
-        {/* USER INFO */}
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold">{user.name}</h1>
+        {/* INFO */}
+        <div className="space-y-2 flex-1">
+          <h1 className="text-3xl font-bold text-yellow-400">{user.name}</h1>
 
-          <p className="flex items-center gap-2 text-gray-700">
+          <p className="flex items-center gap-2 text-gray-300">
             <FiMail /> {user.email}
           </p>
 
-          <p className="flex items-center gap-2 text-gray-700">
+          <p className="flex items-center gap-2 text-gray-300">
             <FiUser /> UID: {user.uid}
           </p>
         </div>
 
-        {/* ACCOUNT SUMMARY */}
-        <div className="ml-auto flex flex-col justify-between">
-          <p className="text-xl font-bold text-blue-700">
-            Account Balance: ${user.accountBalance?.toLocaleString()}
+        {/* BALANCES */}
+        <div className="grid gap-3 text-right">
+          <p className="text-xl font-bold text-blue-400">
+            Balance: ${user.accountBalance?.toLocaleString()}
           </p>
 
-          <p className="text-lg font-semibold text-yellow-600">
-            Fuel Money: ${user.fuelMoney?.toLocaleString()}
+          <p className="text-lg font-semibold text-yellow-400">
+            Fuel: ${user.fuelMoney?.toLocaleString()}
           </p>
 
-          <p className="text-lg font-semibold text-green-600">
-            Total Profit: ${user.totalProfit?.toLocaleString()}
+          <p className="text-lg font-semibold text-green-400">
+            Profit: ${user.totalProfit?.toLocaleString()}
           </p>
         </div>
       </div>
 
-      {/* TRANSACTIONS TABLE */}
-      <div className="bg-white shadow rounded-2xl p-6 border">
-        <h2 className="text-2xl font-bold mb-4">Transactions</h2>
+      {/* TRANSACTIONS */}
+      <div className="bg-[#111]/60 backdrop-blur-xl p-6 rounded-2xl shadow-lg border border-gray-800">
+        <h2 className="text-2xl font-bold text-yellow-400 mb-6">
+          Transactions
+        </h2>
 
         {transactions.length === 0 ? (
-          <p className="text-gray-600">No transactions found.</p>
+          <p className="text-gray-400">No transactions found.</p>
         ) : (
-          <div className="overflow-auto">
-            <table className="min-w-full bg-white">
-              <thead>
-                <tr className="bg-gray-100 text-left">
-                  <th className="p-3">Amount</th>
-                  <th className="p-3">Type</th>
-                  <th className="p-3">Description</th>
-                  <th className="p-3">Date</th>
+          <div className="overflow-auto border border-gray-900 rounded-xl">
+            <table className="w-full text-left">
+              <thead className="bg-gray-900/60">
+                <tr>
+                  <th className="p-3 text-gray-300">Amount</th>
+                  <th className="p-3 text-gray-300">Type</th>
+                  <th className="p-3 text-gray-300">Description</th>
+                  <th className="p-3 text-gray-300">Date</th>
                 </tr>
               </thead>
 
               <tbody>
                 {transactions.map((tx) => (
-                  <tr key={tx.id} className="border-b hover:bg-gray-50">
-                    <td className="p-3 font-semibold">${tx.amount}</td>
-                    <td className="p-3 capitalize">{tx.type}</td>
-                    <td className="p-3">{tx.description}</td>
-                    <td className="p-3">{formatDate(tx.createdAt)}</td>
+                  <tr
+                    key={tx.id}
+                    className="border-b border-gray-800 hover:bg-gray-900/40 transition"
+                  >
+                    <td className="p-3 font-semibold text-blue-300">
+                      ${tx.amount}
+                    </td>
+                    <td className="p-3 capitalize text-yellow-300">
+                      {tx.type}
+                    </td>
+                    <td className="p-3 text-gray-300">{tx.description}</td>
+                    <td className="p-3 text-gray-400">
+                      {formatDate(tx.createdAt)}
+                    </td>
                   </tr>
                 ))}
               </tbody>

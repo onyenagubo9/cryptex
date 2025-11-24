@@ -27,10 +27,8 @@ export default function UsersPage() {
     const loadUsers = async () => {
       try {
         const snap = await getDocs(collection(db, "users"));
-
         const list: User[] = snap.docs.map((doc) => {
           const d = doc.data();
-
           return {
             id: doc.id,
             uid: d.uid ?? "",
@@ -42,7 +40,6 @@ export default function UsersPage() {
             totalProfit: Number(d.totalProfit || 0),
           };
         });
-
         setUsers(list);
       } catch (err) {
         console.error("Error loading users:", err);
@@ -50,7 +47,6 @@ export default function UsersPage() {
         setLoading(false);
       }
     };
-
     loadUsers();
   }, []);
 
@@ -64,39 +60,41 @@ export default function UsersPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">Users</h1>
+
+      {/* PAGE TITLE */}
+      <h1 className="text-4xl font-extrabold mb-8 text-white tracking-tight">
+        Users Management
+      </h1>
 
       {/* SEARCH BAR */}
-      <div className="mb-6">
-        <div className="flex items-center bg-white shadow rounded-xl p-3 border border-gray-200 max-w-md">
-          <FiSearch className="text-gray-500 mr-2" />
+      <div className="mb-8 max-w-lg">
+        <div className="flex items-center bg-gray-800/60 backdrop-blur-xl border border-gray-700 shadow-lg rounded-2xl px-4 py-3">
+          <FiSearch className="text-gray-400 mr-3" size={20} />
           <input
             type="text"
-            placeholder="Search by email or name..."
-            className="w-full outline-none text-gray-700"
+            placeholder="Search users by name or email..."
+            className="w-full bg-transparent outline-none text-gray-200 placeholder-gray-500"
             value={search}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setSearch(e.target.value)
-            }
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
       </div>
 
       {loading ? (
-        <p className="text-gray-500">Loading users...</p>
+        <p className="text-gray-300 animate-pulse">Loading users...</p>
       ) : filtered.length === 0 ? (
-        <p>No users found.</p>
+        <p className="text-gray-400">No users found.</p>
       ) : (
-        <div className="overflow-auto rounded-xl shadow border border-gray-100">
-          <table className="min-w-full bg-white">
+        <div className="overflow-auto rounded-2xl shadow-2xl border border-gray-800 bg-gray-900/50 backdrop-blur-xl">
+          <table className="min-w-full text-gray-200">
             <thead>
-              <tr className="bg-gray-100 text-left">
-                <th className="p-3">User</th>
-                <th className="p-3">Email</th>
-                <th className="p-3">Balance</th>
-                <th className="p-3">Fuel Money</th>
-                <th className="p-3">Total Profit</th>
-                <th className="p-3 text-right">Actions</th>
+              <tr className="bg-gray-800/80 border-b border-gray-700 text-left">
+                <th className="p-4 font-semibold">User</th>
+                <th className="p-4 font-semibold">Email</th>
+                <th className="p-4 font-semibold">Balance</th>
+                <th className="p-4 font-semibold">Fuel Money</th>
+                <th className="p-4 font-semibold">Total Profit</th>
+                <th className="p-4 font-semibold text-right">Actions</th>
               </tr>
             </thead>
 
@@ -104,39 +102,40 @@ export default function UsersPage() {
               {filtered.map((user) => (
                 <tr
                   key={user.id}
-                  className="border-b hover:bg-gray-50 transition"
+                  className="border-b border-gray-800 hover:bg-gray-800/60 transition"
                 >
-                  {/* USER + IMAGE */}
-                  <td className="p-3 flex items-center gap-3">
+                  <td className="p-4 flex items-center gap-3">
                     <Image
                       src={user.image || "/placeholder.png"}
                       alt={user.name}
-                      width={40}
-                      height={40}
-                      className="w-10 h-10 rounded-full object-cover border"
+                      width={45}
+                      height={45}
+                      className="rounded-full object-cover border border-gray-700 shadow-md"
                     />
-                    <span className="font-medium">{user.name}</span>
+                    <span className="font-medium text-white">
+                      {user.name}
+                    </span>
                   </td>
 
-                  <td className="p-3">{user.email}</td>
+                  <td className="p-4 text-gray-300">{user.email}</td>
 
-                  <td className="p-3 font-semibold text-blue-600">
+                  <td className="p-4 font-semibold text-blue-400">
                     ${user.accountBalance?.toLocaleString()}
                   </td>
 
-                  <td className="p-3 font-semibold text-yellow-600">
+                  <td className="p-4 font-semibold text-yellow-400">
                     ${user.fuelMoney?.toLocaleString()}
                   </td>
 
-                  <td className="p-3 font-semibold text-green-600">
+                  <td className="p-4 font-semibold text-green-400">
                     ${user.totalProfit?.toLocaleString()}
                   </td>
 
-                  <td className="p-3 text-right flex gap-2 justify-end">
+                  <td className="p-4 text-right flex gap-3 justify-end">
                     {/* VIEW BUTTON */}
                     <Link
                       href={`/admin/users/${user.uid}`}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm shadow-md transition"
                     >
                       View
                     </Link>
@@ -144,7 +143,7 @@ export default function UsersPage() {
                     {/* EDIT BUTTON */}
                     <Link
                       href={`/admin/users/${user.uid}/edit`}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm shadow-md transition"
                     >
                       Edit
                     </Link>

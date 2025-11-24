@@ -23,7 +23,6 @@ export default function EditTransactionPage() {
   const params = useParams();
   const router = useRouter();
 
-  // SAFELY READ DYNAMIC ROUTE PARAM
   const rawId = params?.txid;
   const txid = Array.isArray(rawId) ? rawId[0] : rawId || "";
 
@@ -33,15 +32,15 @@ export default function EditTransactionPage() {
     description: "",
   });
 
-  const [userId, setUserId] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(true);
-  const [saving, setSaving] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
-  const [success, setSuccess] = useState<string>("");
+  const [userId, setUserId] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  // -------------------------------------------------------
-  // LOAD TRANSACTION DATA
-  // -------------------------------------------------------
+  // ----------------------------------------------------
+  // LOAD TRANSACTION
+  // ----------------------------------------------------
   useEffect(() => {
     const loadTransaction = async () => {
       try {
@@ -76,9 +75,9 @@ export default function EditTransactionPage() {
     loadTransaction();
   }, [txid]);
 
-  // -------------------------------------------------------
-  // HANDLE INPUT CHANGE (TYPE SAFE)
-  // -------------------------------------------------------
+  // ----------------------------------------------------
+  // INPUT CHANGE
+  // ----------------------------------------------------
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -87,10 +86,10 @@ export default function EditTransactionPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // -------------------------------------------------------
-  // SAVE CHANGES (TYPE SAFE)
-  // -------------------------------------------------------
-  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
+  // ----------------------------------------------------
+  // SAVE CHANGES
+  // ----------------------------------------------------
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setError("");
@@ -105,7 +104,7 @@ export default function EditTransactionPage() {
         description: form.description,
       });
 
-      setSuccess("Transaction updated!");
+      setSuccess("Transaction updated successfully!");
 
       setTimeout(() => router.push("/admin/transactions"), 1200);
     } catch (err) {
@@ -116,47 +115,52 @@ export default function EditTransactionPage() {
     }
   };
 
-  // -------------------------------------------------------
+  // ----------------------------------------------------
   // UI
-  // -------------------------------------------------------
-  if (loading) return <div className="p-6">Loading transaction...</div>;
+  // ----------------------------------------------------
+  if (loading) return <div className="p-6 text-white">Loading...</div>;
 
   return (
-    <div className="p-6 max-w-xl">
+    <div className="p-6 max-w-2xl mx-auto text-white">
+      {/* Back button */}
       <Link
         href="/admin/transactions"
-        className="flex items-center text-blue-600 hover:underline mb-6"
+        className="flex items-center mb-6 text-yellow-400 hover:text-yellow-300 transition"
       >
-        <FiArrowLeft className="mr-2" /> Back
+        <FiArrowLeft className="mr-2" /> Back to Transactions
       </Link>
 
-      <h1 className="text-3xl font-bold mb-6">Edit Transaction</h1>
+      {/* Heading */}
+      <h1 className="text-4xl font-bold mb-6 text-yellow-400">
+        Edit Transaction
+      </h1>
 
+      {/* Form card */}
       <form
         onSubmit={handleSave}
-        className="bg-white p-6 shadow rounded-xl space-y-6 border"
+        className="bg-[#0d1117] border border-gray-700 p-6 rounded-xl shadow-lg space-y-6"
       >
-        {/* AMOUNT */}
+        {/* Amount */}
         <div>
-          <label className="block font-medium mb-1">Amount</label>
+          <label className="block mb-1 text-gray-300">Amount</label>
           <input
             type="number"
             name="amount"
             value={form.amount}
             onChange={handleChange}
-            className="w-full p-3 border rounded-lg"
+            className="w-full p-3 rounded-lg bg-gray-900 border border-gray-700 text-white focus:border-yellow-400 outline-none"
             required
           />
         </div>
 
-        {/* TYPE */}
+        {/* Type */}
         <div>
-          <label className="block font-medium mb-1">Type</label>
+          <label className="block mb-1 text-gray-300">Type</label>
           <select
             name="type"
             value={form.type}
             onChange={handleChange}
-            className="w-full p-3 border rounded-lg"
+            className="w-full p-3 rounded-lg bg-gray-900 border border-gray-700 text-white focus:border-yellow-400 outline-none"
           >
             <option value="debit">Debit</option>
             <option value="profit">Profit</option>
@@ -165,29 +169,30 @@ export default function EditTransactionPage() {
           </select>
         </div>
 
-        {/* DESCRIPTION */}
+        {/* Description */}
         <div>
-          <label className="block font-medium mb-1">Description</label>
+          <label className="block mb-1 text-gray-300">Description</label>
           <textarea
             name="description"
             value={form.description}
             onChange={handleChange}
-            className="w-full p-3 border rounded-lg"
+            className="w-full p-3 rounded-lg bg-gray-900 border border-gray-700 text-white focus:border-yellow-400 outline-none"
+            rows={4}
             required
           ></textarea>
         </div>
 
-        {/* MESSAGES */}
-        {success && <p className="text-green-600">{success}</p>}
-        {error && <p className="text-red-600">{error}</p>}
+        {/* Messages */}
+        {success && <p className="text-green-400">{success}</p>}
+        {error && <p className="text-red-400">{error}</p>}
 
-        {/* SAVE BUTTON */}
+        {/* Save button */}
         <button
           type="submit"
           disabled={saving}
-          className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition"
+          className="w-full bg-yellow-500 text-black font-bold py-3 rounded-lg hover:bg-yellow-400 transition disabled:opacity-50"
         >
-          {saving ? "Saving…" : "Save Changes"}
+          {saving ? "Saving..." : "Save Changes"}
         </button>
       </form>
     </div>

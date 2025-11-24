@@ -25,6 +25,11 @@ export default function AllTransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Search + Pagination
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
+
   useEffect(() => {
     const loadTransactions = async () => {
       try {
@@ -33,42 +38,41 @@ export default function AllTransactionsPage() {
 
         for (const txDoc of txSnap.docs) {
           const data = txDoc.data();
-
           const userId = txDoc.ref.parent.parent?.id || "unknown";
-          let userEmail = "Unknown";
 
+          let userEmail = "Unknown";
           if (userId !== "unknown") {
             const userRef = doc(db, "users", userId);
             const userSnap = await getDoc(userRef);
             if (userSnap.exists()) {
-              userEmail = (userSnap.data().email as string) || "Unknown";
+              userEmail = userSnap.data().email || "Unknown";
             }
           }
 
           txList.push({
             id: txDoc.id,
             amount: Number(data.amount),
-            type: data.type as string,
-            description: data.description as string,
+            type: data.type,
+            description: data.description,
             createdAt: data.createdAt,
             userId,
             userEmail,
           });
         }
 
-        // Sort newest first
+        // Sort by newest
         txList.sort((a, b) => {
-          const da =
+          const aTime =
             a.createdAt instanceof Timestamp
               ? a.createdAt.toDate()
               : new Date(a.createdAt);
 
-          const dbb =
+          const bTime =
             b.createdAt instanceof Timestamp
               ? b.createdAt.toDate()
               : new Date(b.createdAt);
 
-          return dbb.getTime() - da.getTime();
+          return bTime.getTime() - aTime.getTime();
         });
 
         setTransactions(txList);
@@ -82,109 +86,154 @@ export default function AllTransactionsPage() {
     loadTransactions();
   }, []);
 
-  if (loading) {
-    return <div className="p-6 text-gray-600">Loading transactions...</div>;
-  }
+  if (loading)
+    return (
+      <p className="p-6 text-gray-300 text-xl animate-pulse">Loading…</p>
+    );
+
+  // SEARCH
+  const filtered = transactions.filter((tx) => {
+    const s = search.toLowerCase();
+    return (
+      tx.userEmail.toLowerCase().includes(s) ||
+      tx.type.toLowerCase().includes(s) ||
+      tx.description.toLowerCase().includes(s)
+    );
+  });
+
+  // PAGINATION
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginated = filtered.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Badge color
+  const badge = (type: string) => {
+    switch (type) {
+      case "profit":
+        return "bg-green-900 text-green-300 border border-green-700";
+      case "debit":
+        return "bg-red-900 text-red-300 border border-red-700";
+      case "fuel":
+        return "bg-yellow-900 text-yellow-300 border border-yellow-700";
+      default:
+        return "bg-gray-800 text-gray-300 border border-gray-700";
+    }
+  };
 
   return (
-    <div className="p-6">
+    <div className="p-6 text-white">
 
-      {/* HEADER WITH ADD BUTTON */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">All Transactions</h1>
+      {/* HEADER */}
+      <div className="mb-10 bg-[#0b1220] rounded-2xl p-6 border border-[#1a2335] shadow-lg">
+        <div className="flex justify-between items-center">
+          <h1 className="text-4xl font-extrabold text-yellow-400">
+            Transactions Overview
+          </h1>
 
-        <Link
-          href="/admin/transactions/add"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-        >
-          + Add Transaction
-        </Link>
+          <Link
+            href="/admin/transactions/add"
+            className="px-5 py-3 bg-yellow-500 text-black font-bold rounded-xl hover:bg-yellow-400 transition shadow-lg"
+          >
+            + Add Transaction
+          </Link>
+        </div>
       </div>
 
-      <div className="overflow-auto rounded-xl shadow border border-gray-200 bg-white">
-        <table className="min-w-full table-auto">
+      {/* SEARCH BAR */}
+      <div className="mb-6">
+        <input
+          type="text"
+          placeholder="Search transactions..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full max-w-md px-4 py-3 rounded-xl bg-[#101b2d] border border-[#1f2a40] text-white placeholder-gray-400 focus:ring-2 focus:ring-yellow-500 outline-none"
+        />
+      </div>
+
+      {/* TABLE WRAPPER */}
+      <div className="overflow-auto bg-[#0b1220] rounded-2xl border border-[#1a2335] shadow-xl">
+        <table className="min-w-full">
           <thead>
-            <tr className="bg-gray-100 text-left text-gray-600">
-              <th className="p-3">User</th>
-              <th className="p-3">Amount</th>
-              <th className="p-3">Type</th>
-              <th className="p-3">Description</th>
-              <th className="p-3">Date</th>
-              <th className="p-3">Actions</th>
+            <tr className="bg-[#101b2d] text-gray-300 text-left">
+              <th className="p-4">User</th>
+              <th className="p-4">Amount</th>
+              <th className="p-4">Type</th>
+              <th className="p-4">Description</th>
+              <th className="p-4">Date</th>
+              <th className="p-4">Action</th>
             </tr>
           </thead>
 
           <tbody>
-            {transactions.map((tx) => {
+            {paginated.map((tx) => {
               const date =
                 tx.createdAt instanceof Timestamp
                   ? tx.createdAt.toDate()
                   : new Date(tx.createdAt);
 
-              const typeColor =
-                tx.type === "profit"
-                  ? "text-green-600 bg-green-100"
-                  : tx.type === "debit"
-                  ? "text-red-600 bg-red-100"
-                  : tx.type === "fuel"
-                  ? "text-yellow-700 bg-yellow-100"
-                  : tx.type === "withdrawal"
-                  ? "text-purple-700 bg-purple-100"
-                  : "text-gray-700 bg-gray-100";
-
               return (
                 <tr
                   key={tx.id}
-                  className="border-b hover:bg-gray-50 transition"
+                  className="border-b border-[#1f2a40] hover:bg-[#131d31] transition"
                 >
-                  <td className="p-3">
-                    <Link
-                      href={`/admin/users/${tx.userId}`}
-                      className="text-blue-600 hover:underline font-medium"
-                    >
+                  <td className="p-4 text-blue-400 underline">
+                    <Link href={`/admin/users/${tx.userId}`}>
                       {tx.userEmail}
                     </Link>
                   </td>
 
-                  <td className="p-3 font-semibold">
+                  <td className="p-4 font-bold text-lg text-green-300">
                     ${tx.amount.toLocaleString()}
                   </td>
 
-                  <td className="p-3">
+                  <td className="p-4">
                     <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${typeColor}`}
+                      className={`px-3 py-1 rounded-lg text-sm font-semibold ${badge(
+                        tx.type
+                      )}`}
                     >
                       {tx.type}
                     </span>
                   </td>
 
-                  <td className="p-3 text-gray-700">{tx.description}</td>
+                  <td className="p-4 text-gray-300">{tx.description}</td>
 
-                  <td className="p-3 text-gray-600">
+                  <td className="p-4 text-gray-400">
                     {date.toLocaleString()}
                   </td>
 
-                  <td className="p-3 flex space-x-2">
+                  <td className="p-4">
                     <Link
                       href={`/admin/transactions/${tx.id}/edit`}
-                      className="px-3 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500"
                     >
                       Edit
-                    </Link>
-
-                    <Link
-                      href={`/admin/transactions/add`}
-                      className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition"
-                    >
-                      Add
                     </Link>
                   </td>
                 </tr>
               );
             })}
           </tbody>
-
         </table>
+      </div>
+
+      {/* PAGINATION */}
+      <div className="mt-8 flex justify-center gap-3">
+        {Array.from({ length: totalPages }, (_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrentPage(i + 1)}
+            className={`px-4 py-2 rounded-lg font-semibold border ${
+              currentPage === i + 1
+                ? "bg-yellow-500 text-black"
+                : "bg-[#0b1220] text-white border-[#1f2a40] hover:bg-[#131d31]"
+            }`}
+          >
+            {i + 1}
+          </button>
+        ))}
       </div>
     </div>
   );

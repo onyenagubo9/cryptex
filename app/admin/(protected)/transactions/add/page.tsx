@@ -51,7 +51,11 @@ export default function AddTransactionPage() {
     loadUsers();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
@@ -68,12 +72,12 @@ export default function AddTransactionPage() {
     setSuccess("");
 
     try {
-      // Add the transaction
+      // Add transaction
       await addDoc(collection(db, "users", selectedUser, "transactions"), {
         amount: form.amount,
         type: form.type,
         description: form.description,
-        createdAt: Timestamp.now(), // FIXED: Real Firebase Timestamp
+        createdAt: Timestamp.now(),
       });
 
       const userRef = doc(db, "users", selectedUser);
@@ -87,9 +91,11 @@ export default function AddTransactionPage() {
 
       const user = userSnap.data();
 
-      const currentBalance = Number(user.accountBalance?.toString().replace(/,/g, "")) || 0;
+      const currentBalance =
+        Number(user.accountBalance?.toString().replace(/,/g, "")) || 0;
       const currentFuel = Number(user.fuelMoney || 0);
-      const currentProfit = Number(user.totalProfit?.toString().replace(/,/g, "")) || 0;
+      const currentProfit =
+        Number(user.totalProfit?.toString().replace(/,/g, "")) || 0;
 
       const amount = Number(form.amount);
 
@@ -122,20 +128,30 @@ export default function AddTransactionPage() {
   };
 
   return (
-    <div className="p-6 max-w-xl">
-
-      <Link href="/admin/transactions" className="flex items-center text-blue-600 hover:underline mb-6">
+    <div className="p-6 max-w-2xl mx-auto text-white">
+      {/* BACK BUTTON */}
+      <Link
+        href="/admin/transactions"
+        className="flex items-center mb-6 text-yellow-400 hover:text-yellow-300 transition"
+      >
         <FiArrowLeft className="mr-2" /> Back
       </Link>
 
-      <h1 className="text-3xl font-bold mb-6">Add Transaction</h1>
+      {/* PAGE TITLE */}
+      <h1 className="text-4xl font-bold mb-6 text-yellow-400">
+        Add Transaction
+      </h1>
 
-      <form onSubmit={handleSubmit} className="bg-white p-6 shadow rounded-xl space-y-6 border">
-
+      {/* FORM CARD */}
+      <form
+        onSubmit={handleSubmit}
+        className="bg-[#0d1117] border border-gray-700 p-6 rounded-xl shadow-lg space-y-6"
+      >
+        {/* USER SELECT */}
         <div>
-          <label className="block font-medium mb-1">Select User</label>
+          <label className="block mb-1 text-gray-300">Select User</label>
           <select
-            className="w-full p-3 border rounded-lg"
+            className="w-full p-3 rounded-lg bg-gray-900 border border-gray-700 text-white focus:border-yellow-400 outline-none"
             value={selectedUser}
             onChange={(e) => setSelectedUser(e.target.value)}
             required
@@ -149,55 +165,60 @@ export default function AddTransactionPage() {
           </select>
         </div>
 
+        {/* AMOUNT */}
         <div>
-          <label className="block font-medium mb-1">Amount</label>
+          <label className="block mb-1 text-gray-300">Amount</label>
           <input
             type="number"
             name="amount"
             value={form.amount}
             onChange={handleChange}
-            className="w-full p-3 border rounded-lg"
+            className="w-full p-3 rounded-lg bg-gray-900 border border-gray-700 text-white focus:border-yellow-400 outline-none"
             required
           />
         </div>
 
+        {/* TYPE */}
         <div>
-          <label className="block font-medium mb-1">Type</label>
+          <label className="block mb-1 text-gray-300">Type</label>
           <select
             name="type"
             value={form.type}
             onChange={handleChange}
-            className="w-full p-3 border rounded-lg"
+            className="w-full p-3 rounded-lg bg-gray-900 border border-gray-700 text-white focus:border-yellow-400 outline-none"
           >
             <option value="debit">Debit</option>
             <option value="profit">Profit</option>
             <option value="fuel">Fuel</option>
-            <option value="deposit">deposit</option>
+            <option value="deposit">Deposit</option>
           </select>
         </div>
 
+        {/* DESCRIPTION */}
         <div>
-          <label className="block font-medium mb-1">Description</label>
+          <label className="block mb-1 text-gray-300">Description</label>
           <textarea
             name="description"
             value={form.description}
             onChange={handleChange}
-            className="w-full p-3 border rounded-lg"
+            className="w-full p-3 rounded-lg bg-gray-900 border border-gray-700 text-white focus:border-yellow-400 outline-none"
+            rows={4}
             required
           ></textarea>
         </div>
 
-        {success && <p className="text-green-600">{success}</p>}
-        {error && <p className="text-red-600">{error}</p>}
+        {/* MESSAGES */}
+        {success && <p className="text-green-400">{success}</p>}
+        {error && <p className="text-red-400">{error}</p>}
 
+        {/* SUBMIT BUTTON */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition"
+          className="w-full bg-yellow-500 text-black font-bold py-3 rounded-lg hover:bg-yellow-400 transition disabled:opacity-50"
         >
-          {loading ? "Saving..." : "Add Transaction"}
+          {loading ? "Saving…" : "Add Transaction"}
         </button>
-
       </form>
     </div>
   );
