@@ -4,11 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { db } from "@/firebase/config";
 import {
-  doc,
-  updateDoc,
   addDoc,
   collection,
-  getDoc,
   getDocs,
   Timestamp,
 } from "firebase/firestore";
@@ -72,46 +69,12 @@ export default function AddTransactionPage() {
     setSuccess("");
 
     try {
-      // Add transaction
+      // ⭐ ADD TRANSACTION ONLY — NO USER BALANCE UPDATE
       await addDoc(collection(db, "users", selectedUser, "transactions"), {
         amount: form.amount,
         type: form.type,
         description: form.description,
         createdAt: Timestamp.now(),
-      });
-
-      const userRef = doc(db, "users", selectedUser);
-      const userSnap = await getDoc(userRef);
-
-      if (!userSnap.exists()) {
-        setError("User not found.");
-        setLoading(false);
-        return;
-      }
-
-      const user = userSnap.data();
-
-      const currentBalance =
-        Number(user.accountBalance?.toString().replace(/,/g, "")) || 0;
-      const currentFuel = Number(user.fuelMoney || 0);
-      const currentProfit =
-        Number(user.totalProfit?.toString().replace(/,/g, "")) || 0;
-
-      const amount = Number(form.amount);
-
-      let newBalance = currentBalance;
-      let newFuel = currentFuel;
-      let newProfit = currentProfit;
-
-      if (form.type === "debit") newBalance -= amount;
-      if (form.type === "withdrawal") newBalance -= amount;
-      if (form.type === "fuel") newFuel += amount;
-      if (form.type === "profit") newProfit += amount;
-
-      await updateDoc(userRef, {
-        accountBalance: newBalance.toLocaleString(),
-        fuelMoney: newFuel,
-        totalProfit: newProfit.toLocaleString(),
       });
 
       setSuccess("Transaction added successfully!");
